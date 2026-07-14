@@ -1,0 +1,6 @@
+{
+  "name": "온가족간병협회",
+  "description": "온가족간병협회 공식 홈페이지 - 전국가족간병등록 및 공식 서류 발급 지원 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
