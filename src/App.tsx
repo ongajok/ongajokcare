@@ -35,7 +35,20 @@ export default function App() {
   // Website states with LocalStorage persistence
   const [config, setConfig] = useState<WebsiteConfig>(() => {
     const saved = localStorage.getItem("ongajok_config");
-    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Auto-fill missing or empty essential contacts with official defaults
+        if (!parsed.phone || parsed.phone === "") parsed.phone = DEFAULT_CONFIG.phone;
+        if (!parsed.kakaoLink || parsed.kakaoLink === "" || parsed.kakaoLink === "http://pf.kakao.com/_YxhcwX") {
+          parsed.kakaoLink = DEFAULT_CONFIG.kakaoLink;
+        }
+        return parsed;
+      } catch (e) {
+        return DEFAULT_CONFIG;
+      }
+    }
+    return DEFAULT_CONFIG;
   });
 
   const [notices, setNotices] = useState<NoticePost[]>(() => {
@@ -441,28 +454,28 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="pt-3 flex flex-wrap items-center justify-center md:justify-start gap-3"
+              className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center md:justify-start gap-4 w-full"
             >
               <button
                 onClick={() => handleScrollToSection("registration")}
-                className="px-5 py-2.5 bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 font-black text-xs rounded-xl shadow-lg border-b-4 border-amber-600 hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group"
-              >
-                {/* Embedded dynamic glow overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                가족간병 신청서 즉시작성
-              </button>
-              <button
-                onClick={handleKakaoConsultation}
-                className="px-5 py-2.5 bg-[#1e3a8a] text-white font-extrabold text-xs rounded-xl border border-[#1e3a8a]/50 hover:bg-[#1a337a] hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-[0_4px_20px_rgba(30,58,138,0.45)] relative overflow-hidden group"
+                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#1d4ed8] text-white font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(30,58,138,0.45)] border-b-4 border-[#172554] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0"
               >
                 {/* Embedded dynamic glow overlay */}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <span className="relative flex items-center justify-center gap-1.5">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current text-[#ffe812]">
-                    <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
-                  </svg>
-                  실시간 카카오톡 전문상담
-                </span>
+                <Edit3 className="w-5 h-5 text-white shrink-0" />
+                <span>가족간병 신청서 즉시작성</span>
+              </button>
+              
+              <button
+                onClick={handleKakaoConsultation}
+                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#FEE500] via-[#FEE500] to-[#FAD100] text-[#191919] font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(254,229,0,0.4)] border-b-4 border-yellow-600 hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0"
+              >
+                {/* Embedded dynamic glow overlay */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <svg viewBox="0 0 24 24" className="w-5.5 h-5.5 fill-current text-[#191919] shrink-0">
+                  <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
+                </svg>
+                <span>실시간 카카오톡 전문상담</span>
               </button>
             </motion.div>
           </div>

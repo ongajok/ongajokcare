@@ -107,9 +107,9 @@ export const INITIAL_NOTICES: NoticePost[] = [
 export const DEFAULT_CONFIG: WebsiteConfig = {
   representativeName: "석은영",
   address: "서울 노원구 한글비석로396 상계벽산종합상가 109동 제2층 제64호",
-  phone: "", // Starts blank
+  phone: "010-9520-7839", // Customer center number
   businessNumber: "403-99-01901", // Default business number
-  kakaoLink: "", // Starts blank
+  kakaoLink: "http://pf.kakao.com/_YxhcwX/chat", // Kakao channel chat link
   mascotName: "온이",
   themeStyle: "3d-soft",
   

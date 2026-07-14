@@ -39,6 +39,9 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     guardianPhone: string;
     caregiverName: string;
     patientName: string;
+    isSending: boolean;
+    mode?: "simulated" | "live";
+    statusMessage?: string;
   } | null>(null);
 
   const relationships = ["자녀", "배우자", "사위/며느리", "형제/자매", "부모", "손자/손녀", "기타 친인척"];
@@ -76,16 +79,19 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       return;
     }
 
+    const dataToSubmit = { ...formData };
+
     // Submit to App state
     onRegisterSubmit(formData);
 
-    // Open simulated Alimtalk alert notification modal
+    // Open simulated/real Alimtalk alert notification modal
     setNotificationModal({
       isOpen: true,
-      caregiverPhone: formData.caregiverPhone,
-      guardianPhone: formData.guardianPhone,
-      caregiverName: formData.caregiverName,
-      patientName: formData.patientName,
+      caregiverPhone: dataToSubmit.caregiverPhone,
+      guardianPhone: dataToSubmit.guardianPhone,
+      caregiverName: dataToSubmit.caregiverName,
+      patientName: dataToSubmit.patientName,
+      isSending: true,
     });
 
     // Reset Form
@@ -108,6 +114,41 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       insuranceConsent: false,
       privacyPolicy: false,
     });
+
+    // Trigger server-side Aligo Alimtalk / SMS API proxy
+    fetch("/api/send-alimtalk", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dataToSubmit),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setNotificationModal((prev) =>
+          prev
+            ? {
+                ...prev,
+                isSending: false,
+                mode: data.mode || "simulated",
+                statusMessage: data.message,
+              }
+            : null
+        );
+      })
+      .catch((err) => {
+        console.error("Aligo API send error:", err);
+        setNotificationModal((prev) =>
+          prev
+            ? {
+                ...prev,
+                isSending: false,
+                mode: "simulated",
+                statusMessage: "서버와의 연동 통신 중 오류가 발생하여 시뮬레이션으로 전송했습니다.",
+              }
+            : null
+        );
+      });
   };
 
   return (
@@ -644,6 +685,29 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                   <p className="text-[10px] text-slate-400 leading-snug font-bold">
                     * 위 수신 고지는 간병인 연락처({notificationModal.caregiverPhone}), 보호자 연락처({notificationModal.guardianPhone}), 그리고 협회 고객센터(010-9520-7839)로 실시간 동시 전송되었습니다.
                   </p>
+
+                  {notificationModal.isSending ? (
+                    <div className="flex items-center gap-2 justify-center py-2 text-[10px] text-indigo-600 font-extrabold bg-indigo-50/50 rounded-xl border border-dashed border-indigo-200 animate-pulse">
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                      실시간 알리고 알림톡 전송 처리 중...
+                    </div>
+                  ) : (
+                    <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
+                      notificationModal.mode === "simulated"
+                        ? "bg-amber-50 text-amber-800 border-amber-200"
+                        : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    }`}>
+                      <p className="flex items-center gap-1 text-xs font-black">
+                        <Check className="w-3.5 h-3.5" />
+                        {notificationModal.mode === "simulated" ? "알리고 발송 완료 (시뮬레이션)" : "실시간 발송 완료"}
+                      </p>
+                      <p className="text-[9px] text-slate-500 font-medium leading-relaxed">
+                        {notificationModal.statusMessage || (notificationModal.mode === "simulated"
+                          ? "API 키 미설정으로 가상 전송을 완료했습니다. 검수 완료 후 .env 설정 시 실제 발송됩니다."
+                          : "가족간병인 등록 알림이 카카오톡 및 문자로 발송되었습니다.")}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirm button */}
