@@ -156,7 +156,12 @@ const TermsOfService: React.FC = () => {
           <p>2. 협회는 적법한 중개 및 공신력 있는 서류 발급 행정을 대행할 뿐이며, 원내 간병 행위 중 발생한 사고(낙상, 의료 과실, 환자 방치, 절도, 폭행, 상해 등)에 대하여 어떠한 법적 책임도 부담하지 않으며, 이는 전적으로 간병 계약 당사자 간의 민·형사상 해결 과제로 귀속됩니다.</p>
         </div>
 
-        <h4 className="text-sm font-black text-slate-900 border-b border-slate-100 pb-1">제 7 조 (관할 법원)</h4>
+        <h4 className="text-sm font-black text-slate-900 border-b border-slate-100 pb-1">제 7 조 (협회 운영규정 및 등록 효력)</h4>
+        <div className="pl-3 border-l-2 border-slate-200 space-y-1.5">
+          <p>1. <strong>협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생한다.</strong></p>
+        </div>
+
+        <h4 className="text-sm font-black text-slate-900 border-b border-slate-100 pb-1">제 8 조 (관할 법원)</h4>
         <p>
           본 서비스 이용과 관련하여 발생한 이용자와 협회 간의 분쟁에 대하여 소송이 제기될 경우, 협회의 본사 소재지를 관할하는 법원을 합의 관할 법원으로 합니다.
         </p>

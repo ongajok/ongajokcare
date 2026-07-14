@@ -356,6 +356,17 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
             <h3 className="text-xs md:text-sm font-extrabold text-[#1e3a8a] tracking-tight mb-3 text-center">
               서비스 약관 및 매칭 고지사항 (필수 동의)
             </h3>
+
+            {/* 협회 운영규정 효력 발생 고지 배너 */}
+            <div className="mb-4 p-3.5 rounded-2xl bg-blue-50/75 border border-blue-100 text-[11px] text-[#1e3a8a] flex items-start gap-2.5 shadow-sm">
+              <span className="text-base shrink-0">📢</span>
+              <div>
+                <p className="font-extrabold text-xs mb-0.5 text-[#1e3a8a]">협회 운영규정 등록 효력 안내</p>
+                <p className="text-slate-600 font-semibold leading-relaxed">
+                  "협회는 정상 접수된 신청에 대하여 <span className="text-blue-700 font-extrabold">접수일을 기준으로 등록 효력이 발생</span>한다."
+                </p>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
@@ -618,17 +629,20 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     </p>
                     <p>안녕하세요, 온가족간병협회입니다.</p>
                     <p className="text-blue-900 font-extrabold mt-1">
-                      보호자님께서 기재해 주신 소중한 정보가 협회 데이터베이스에 즉시 안전하게 접수되었습니다.
+                      보호자님께서 기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
+                    </p>
+                    <p className="text-xs text-indigo-700 font-extrabold bg-indigo-50 p-2 rounded-lg mt-1 border border-indigo-100">
+                      📢 "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생한다." (협회 운영규정)
                     </p>
                     <div className="pt-2 mt-2 border-t border-slate-200 space-y-1 text-[10px] text-slate-600 font-bold">
                       <p>• 간병인: {notificationModal.caregiverName} 님</p>
                       <p>• 환자명: {notificationModal.patientName} 님</p>
-                      <p>• 상태: 정식 간병 매칭 후보자 정보 보존</p>
+                      <p>• 상태: 접수일 기준 등록 효력 실시간 발생</p>
                     </div>
                   </div>
 
                   <p className="text-[10px] text-slate-400 leading-snug font-bold">
-                    * 위 수신 고지는 간병인 연락처({notificationModal.caregiverPhone}) 및 보호자 연락처({notificationModal.guardianPhone})로 실시간 동시 전송되었습니다.
+                    * 위 수신 고지는 간병인 연락처({notificationModal.caregiverPhone}), 보호자 연락처({notificationModal.guardianPhone}), 그리고 협회 고객센터(010-9520-7839)로 실시간 동시 전송되었습니다.
                   </p>
                 </div>
 
