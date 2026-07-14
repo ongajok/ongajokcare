@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Phone, MessageSquare, Edit3, Lock, Unlock, Settings, X, Check, HelpCircle, ArrowDown } from "lucide-react";
 import { WebsiteConfig, NoticePost, CaregiverRegistration } from "./types";
@@ -17,9 +17,21 @@ import { CompanyLogo } from "./components/CompanyLogo";
 import { LegalModals, LegalModalType } from "./components/LegalModals";
 
 // Real generated image path from step response
-const HERO_FAMILY_IMAGE = "/src/assets/images/korean_caregiving_family_1782756099570.jpg";
+const HERO_FAMILY_IMAGE = "https://i.postimg.cc/4x6hRz3m/gajogsajin.png";
 
 export default function App() {
+  // 3D/4D Interactive Mouse Tilt state
+  const [heroTilt, setHeroTilt] = useState({ x: 0, y: 0 });
+  const handleHeroMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5; // range: -0.5 to 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5; // range: -0.5 to 0.5
+    setHeroTilt({ x: x * 10, y: y * -10 }); // Tilt up to 10 degrees
+  };
+  const handleHeroMouseLeave = () => {
+    setHeroTilt({ x: 0, y: 0 });
+  };
+
   // Website states with LocalStorage persistence
   const [config, setConfig] = useState<WebsiteConfig>(() => {
     const saved = localStorage.getItem("ongajok_config");
@@ -233,57 +245,93 @@ export default function App() {
       {/* MOVIE-POSTER STYLE CINEMATIC HERO BANNER */}
       {/* ========================================================= */}
       <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 pb-12">
-        <div className="relative rounded-3xl overflow-hidden shadow-[0_35px_70px_rgba(0,0,0,0.3),inset_0_2px_10px_rgba(255,255,255,0.15)] h-[440px] md:h-[480px] flex items-center justify-center border border-white/10 transition-all duration-500">
+        <div 
+          onMouseMove={handleHeroMouseMove}
+          onMouseLeave={handleHeroMouseLeave}
+          style={{ perspective: "1000px" }}
+          className="relative rounded-3xl overflow-hidden shadow-[0_35px_70px_rgba(0,0,0,0.3),inset_0_2px_10px_rgba(255,255,255,0.15)] h-[440px] md:h-[480px] flex items-center justify-center border border-white/10 transition-all duration-500 cursor-pointer"
+        >
           
           {/* Multi-Layered 3D & 4D Cinematic Parallax Engine */}
           <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-            {/* Layer 1: Ambient Background Layer (Slightly blurred, slow warm pan) */}
+            {/* Layer 1: Ambient Background Layer (Soft film-grain blur 20% intensity, slow cinematic 4D pan + mouse tilt) */}
             <motion.img
               src={HERO_FAMILY_IMAGE}
-              alt="Background Layer"
+              alt="Cinematic Background Layer"
               referrerPolicy="no-referrer"
-              className="absolute inset-0 w-full h-full object-cover filter brightness-[0.75] contrast-[1.05] blur-[1px] scale-[1.12]"
+              className="absolute inset-0 w-full h-full object-cover filter brightness-[0.72] contrast-[1.12] blur-[1px] scale-[1.20]"
               animate={{
-                scale: [1.12, 1.18, 1.14, 1.20, 1.12],
-                x: [-15, 10, -5, 15, -15],
-                y: [8, -12, 10, -8, 8],
+                scale: [1.20, 1.28, 1.23, 1.30, 1.20],
+                x: [-20 + heroTilt.x * 2.0, 20 + heroTilt.x * 2.0, -10 + heroTilt.x * 2.0, 15 + heroTilt.x * 2.0, -20 + heroTilt.x * 2.0],
+                y: [12 + heroTilt.y * 2.0, -15 + heroTilt.y * 2.0, 10 + heroTilt.y * 2.0, -12 + heroTilt.y * 2.0, 12 + heroTilt.y * 2.0],
+                rotateX: heroTilt.y * 1.2,
+                rotateY: heroTilt.x * 1.2,
               }}
               transition={{
-                duration: 32,
-                repeat: Infinity,
-                ease: "easeInOut",
+                scale: {
+                  duration: 24,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                x: {
+                  duration: 24,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                y: {
+                  duration: 24,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                rotateX: { type: "spring", stiffness: 90, damping: 15 },
+                rotateY: { type: "spring", stiffness: 90, damping: 15 },
               }}
             />
 
-            {/* Layer 2: Main Subject Focus Layer (Simulates 3D separation of people from background)
-                Uses a custom radial mask so only the family in the center is rendered, moving on a different offset scale */}
+            {/* Layer 2: Real-time 3D depth-separating foreground layer (Super sharp high-definition with ultra-subtle edge blur) */}
             <motion.div
               className="absolute inset-0 w-full h-full object-cover"
               style={{
-                clipPath: "ellipse(48% 52% at 50% 48%)",
+                clipPath: "circle(58% at 50% 50%)",
               }}
               animate={{
-                scale: [1.03, 1.08, 1.05, 1.10, 1.03],
-                x: [10, -8, 12, -10, 10],
-                y: [-6, 8, -12, 6, -6],
+                scale: [1.10, 1.16, 1.12, 1.18, 1.10],
+                x: [10 + heroTilt.x * 1.2, -10 + heroTilt.x * 1.2, 12 + heroTilt.x * 1.2, -8 + heroTilt.x * 1.2, 10 + heroTilt.x * 1.2],
+                y: [-8 + heroTilt.y * 1.2, 10 + heroTilt.y * 1.2, -10 + heroTilt.y * 1.2, 8 + heroTilt.y * 1.2, -8 + heroTilt.y * 1.2],
+                rotateX: heroTilt.y * 0.9,
+                rotateY: heroTilt.x * 0.9,
               }}
               transition={{
-                duration: 24,
-                repeat: Infinity,
-                ease: "easeInOut",
+                scale: {
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                x: {
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                y: {
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+                rotateX: { type: "spring", stiffness: 95, damping: 18 },
+                rotateY: { type: "spring", stiffness: 95, damping: 18 },
               }}
             >
               <img
                 src={HERO_FAMILY_IMAGE}
-                alt="Subject Focus Layer"
+                alt="High-Res Focus Layer"
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover filter brightness-[0.98] contrast-[1.05] drop-shadow-[0_15px_30px_rgba(0,0,0,0.4)]"
+                className="w-full h-full object-cover filter brightness-[0.84] contrast-[1.10] blur-[0.8px]"
               />
             </motion.div>
 
             {/* Layer 3: Warm Environmental Glow & Moving Volumetric Light Ray */}
             <motion.div 
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(251,191,36,0.18),transparent_65%)] pointer-events-none mix-blend-screen"
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(251,191,36,0.22),transparent_65%)] pointer-events-none mix-blend-screen"
               animate={{
                 opacity: [0.5, 0.9, 0.6, 1.0, 0.5],
                 scale: [1.0, 1.15, 1.05, 1.2, 1.0],
@@ -354,7 +402,7 @@ export default function App() {
           </div>
 
           {/* Premium dark & warm transparent gradients for maximum text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-slate-950/20 z-[2]" />
           <div className="absolute inset-0 bg-amber-900/10 pointer-events-none z-[2]" />
 
           {/* Slogan and details centered/bottomed on banner */}
@@ -365,7 +413,7 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="inline-block"
             >
-              <span className="text-[10px] font-black tracking-widest text-amber-300 bg-amber-900/50 backdrop-blur-md px-3 py-1 rounded-full border border-amber-500/20 uppercase shadow-sm">
+              <span className="text-[10px] font-black tracking-widest text-amber-300 bg-amber-950/60 backdrop-blur-md px-3 py-1 rounded-full border border-amber-500/20 uppercase shadow-sm">
                 Nationwide Caregiving Association
               </span>
             </motion.div>
@@ -374,7 +422,7 @@ export default function App() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-2xl md:text-4xl font-black text-white tracking-tight leading-snug"
+              className="text-2xl md:text-4xl font-black text-white tracking-tight leading-snug drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             >
               아픈 가족의 곁, 가장 가까운 곳에서 <br className="hidden md:inline" /> 따뜻한 동행이 시작됩니다
             </motion.h1>
@@ -383,7 +431,7 @@ export default function App() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-xs md:text-sm text-slate-200 font-semibold leading-relaxed max-w-2xl"
+              className="text-xs md:text-sm text-slate-100 font-semibold leading-relaxed max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
             >
               가족간병 등록부터 행정 서류 구비까지 온가족간병협회가 보호자님과 늘 함께하겠습니다.
             </motion.p>
