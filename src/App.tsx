@@ -458,21 +458,21 @@ export default function App() {
             >
               <button
                 onClick={() => handleScrollToSection("registration")}
-                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#1d4ed8] text-white font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(30,58,138,0.45)] border-b-4 border-[#172554] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0"
+                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#1e3b8a] via-[#1e40af] to-[#2563eb] text-white font-black text-sm md:text-base rounded-2xl shadow-[0_0_35px_rgba(59,130,246,0.55),0_8px_24px_rgba(30,58,138,0.45)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0 border-t border-white/20"
               >
                 {/* Embedded dynamic glow overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <Edit3 className="w-5 h-5 text-white shrink-0" />
-                <span>가족간병 신청서 즉시작성</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <Edit3 className="w-5 h-5 text-white shrink-0 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
+                <span className="filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">가족간병 신청서 즉시작성</span>
               </button>
               
               <button
                 onClick={handleKakaoConsultation}
-                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#FEE500] via-[#FEE500] to-[#FAD100] text-[#191919] font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(254,229,0,0.4)] border-b-4 border-yellow-600 hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0"
+                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#e5ca00] via-[#cca100] to-[#b38a00] text-slate-950 font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(204,161,0,0.35)] border-b-4 border-[#6b5100] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0 border-t border-white/10"
               >
                 {/* Embedded dynamic glow overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <svg viewBox="0 0 24 24" className="w-5.5 h-5.5 fill-current text-[#191919] shrink-0">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <svg viewBox="0 0 24 24" className="w-5.5 h-5.5 fill-current text-slate-950 shrink-0">
                   <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
                 </svg>
                 <span>실시간 카카오톡 전문상담</span>

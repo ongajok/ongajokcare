@@ -111,7 +111,16 @@ app.post("/api/send-alimtalk", async (req, res) => {
         });
 
         const resultJson: any = await response.json();
-        const isSuccess = resultJson.code === 0 || resultJson.code === "0" || resultJson.result_code === "1";
+        console.log(`📡 [Aligo API Response for ${recipient.role}]:`, JSON.stringify(resultJson));
+        
+        const isSuccess = 
+          resultJson.code === 0 || 
+          resultJson.code === "0" || 
+          resultJson.result_code === "1" || 
+          resultJson.result_code === 1 ||
+          resultJson.result_code === "0" ||
+          resultJson.result_code === 0 ||
+          resultJson.status === "success";
         
         results.push({
           phone: recipient.phone,

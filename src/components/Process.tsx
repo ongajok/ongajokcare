@@ -121,7 +121,7 @@ export default function Process({ config }: ProcessProps) {
                   <IconComponent className="w-5 h-5 md:w-7 md:h-7" />
                 </div>
 
-                <h4 className="text-[11px] md:text-sm font-black text-[#1e3a8a] mb-0.5 md:mb-1">{step.title}</h4>
+                <h4 className="text-sm sm:text-base md:text-lg font-black text-[#0f172a] leading-tight mb-1.5">{step.title}</h4>
                 <p className="text-[8px] md:text-[10px] text-slate-400 font-extrabold tracking-wide uppercase mb-1 md:mb-2">{step.subtitle}</p>
                 <p className="text-[10px] md:text-xs text-slate-500 font-semibold leading-normal md:leading-relaxed">{step.description}</p>
               </div>
