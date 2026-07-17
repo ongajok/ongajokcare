@@ -130,7 +130,9 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
             ? {
                 ...prev,
                 isSending: false,
-                mode: data.success ? (data.mode || "live") : "error_config",
+                mode: data.success 
+                  ? (data.mode || "live") 
+                  : (data.mode === "live" ? "live_failed" : (data.mode || "error_config")),
                 statusMessage: data.message,
               }
             : null
@@ -698,12 +700,12 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
                       notificationModal.mode === "simulated"
                         ? "bg-amber-50 text-amber-800 border-amber-200"
-                        : notificationModal.mode === "error_config"
+                        : (notificationModal.mode === "error_config" || notificationModal.mode === "live_failed")
                         ? "bg-rose-50 text-rose-800 border-rose-200"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
                       <p className="flex items-center gap-1 text-xs font-black">
-                        {notificationModal.mode === "error_config" ? (
+                        {(notificationModal.mode === "error_config" || notificationModal.mode === "live_failed") ? (
                           <X className="w-4 h-4 text-rose-600" />
                         ) : (
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -712,6 +714,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                           ? "알리고 발송 완료 (시뮬레이션)"
                           : notificationModal.mode === "error_config"
                           ? "알리고 API 설정 필요 (실시간 전송)"
+                          : notificationModal.mode === "live_failed"
+                          ? "알림톡 실제 전송 실패 (IP 또는 설정 오류)"
                           : "실시간 실제 발송 완료"}
                       </p>
                       <p className="text-[9px] text-slate-500 font-semibold leading-relaxed">

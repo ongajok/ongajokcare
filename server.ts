@@ -53,13 +53,26 @@ app.post("/api/send-alimtalk", async (req, res) => {
 본 수신 고지는 증빙 보존용으로 발송되었습니다.
 온가족간병협회 고객센터: 010-9520-7839`;
 
-    // Retrieve credentials from environment variables with robust defaults requested by the user
-    const apiKey = process.env.ALIGO_API_KEY || "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
-    const userId = process.env.ALIGO_USER_ID || "ongajok1090";
-    const senderKey = process.env.ALIGO_SENDER_KEY || "90393b608b562a491a73e74e7e5331b8b41ba0e0";
-    const senderPhone = process.env.ALIGO_SENDER_PHONE || "01095207839";
+    // Robust credential checks (falling back to user's direct values if env is undefined, empty, or placeholder)
+    let apiKey = process.env.ALIGO_API_KEY;
+    if (!apiKey || apiKey === "" || apiKey === "undefined") {
+      apiKey = "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
+    }
 
-    const isConfigured = apiKey && apiKey !== "" && userId && userId !== "";
+    let userId = process.env.ALIGO_USER_ID;
+    if (!userId || userId === "" || userId === "undefined") {
+      userId = "ongajok1090";
+    }
+
+    let senderKey = process.env.ALIGO_SENDER_KEY;
+    if (!senderKey || senderKey === "" || senderKey === "undefined") {
+      senderKey = "90393b608b562a491a73e74e7e5331b8b41ba0e0";
+    }
+
+    let senderPhone = process.env.ALIGO_SENDER_PHONE;
+    if (!senderPhone || senderPhone === "" || senderPhone === "undefined") {
+      senderPhone = "01095207839";
+    }
 
     const recipients = [
       { phone: caregiverPhone, role: "간병인" },
@@ -67,19 +80,14 @@ app.post("/api/send-alimtalk", async (req, res) => {
       { phone: "010-9520-7839", role: "협회 고객센터" }
     ];
 
-    if (!isConfigured) {
-      console.warn("⚠️ [Aligo API Live Send Failed] Environment secrets (ALIGO_API_KEY, ALIGO_USER_ID) are not configured.");
-      return res.json({
-        success: false,
-        mode: "error_config",
-        message: "알리고 API 인증 키(ALIGO_API_KEY, ALIGO_USER_ID)가 환경설정에 누락되어 실제 전송이 불가능합니다. AI Studio의 Settings 메뉴에서 변수를 등록해 주세요. (발신키 90393b6... 및 템플릿 UJ_5407 연동은 완성되었습니다)",
-        recipients: recipients.map(r => ({ phone: r.phone, role: r.role, success: false })),
-        msg
-      });
-    }
+    console.log("=========================================");
+    console.log(`📡 [Aligo API Live Init]`);
+    console.log(`- API User ID: ${userId}`);
+    console.log(`- API Key (masked): ${apiKey.substring(0, 8)}...`);
+    console.log(`- Sender Key: ${senderKey}`);
+    console.log(`- Sender Phone: ${senderPhone}`);
+    console.log("=========================================");
 
-    console.log("🚀 [Aligo API Live] Triggering Kakao Alimtalk sending via template UJ_5407...");
-    
     const results = [];
     for (const recipient of recipients) {
       const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
@@ -89,7 +97,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
       params.append("apikey", apiKey);
       params.append("userid", userId);
       params.append("senderkey", senderKey);
-      params.append("tpl_code", "UJ_5407"); // Template code given by the user
+      params.append("tpl_code", "UJ_5407"); // Official approved Template Code
       params.append("sender", formattedSender);
       params.append("receiver_1", formattedReceiver);
       params.append("subject_1", "[가족간병 등록 접수 완료]");
@@ -101,6 +109,8 @@ app.post("/api/send-alimtalk", async (req, res) => {
       params.append("failover_subject_1", "[가족간병 등록 접수 완료]");
       params.append("failover_msg_1", msg);
 
+      console.log(`📤 Sending Alimtalk to ${recipient.role} (${formattedReceiver})...`);
+
       try {
         const response = await fetch("https://kakaoapi.aligo.in/akv10/alimtalk/send/", {
           method: "POST",
@@ -110,8 +120,9 @@ app.post("/api/send-alimtalk", async (req, res) => {
           body: params.toString()
         });
 
+        const status = response.status;
         const resultJson: any = await response.json();
-        console.log(`📡 [Aligo API Response for ${recipient.role}]:`, JSON.stringify(resultJson));
+        console.log(`📡 [Aligo API Response status: ${status} for ${recipient.role}]:`, JSON.stringify(resultJson));
         
         const isSuccess = 
           resultJson.code === 0 || 
@@ -129,6 +140,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
           data: resultJson
         });
       } catch (err: any) {
+        console.error(`❌ Fetch Error for ${recipient.role}:`, err.message);
         results.push({
           phone: recipient.phone,
           role: recipient.role,
@@ -151,6 +163,8 @@ app.post("/api/send-alimtalk", async (req, res) => {
     } catch (e) {
       console.warn("Failed to fetch outbound IP dynamically:", e);
     }
+
+    console.log(`ℹ️ Current Server Outbound IP: ${outboundIp}`);
 
     const isIpError = results.some(r => r.data && (r.data.code === -99 || r.data.code === "-99" || (r.data.message && r.data.message.includes("IP"))));
 
