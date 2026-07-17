@@ -130,7 +130,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
             ? {
                 ...prev,
                 isSending: false,
-                mode: data.mode || "simulated",
+                mode: data.success ? (data.mode || "live") : "error_config",
                 statusMessage: data.message,
               }
             : null

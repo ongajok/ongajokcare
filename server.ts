@@ -140,12 +140,34 @@ app.post("/api/send-alimtalk", async (req, res) => {
 
     const anySuccess = results.some(r => r.success);
 
+    // Dynamically retrieve the current outbound IP of this container
+    let outboundIp = "34.34.244.39";
+    try {
+      const ipRes = await fetch("https://api.ipify.org?format=json");
+      const ipData: any = await ipRes.json();
+      if (ipData && ipData.ip) {
+        outboundIp = ipData.ip;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch outbound IP dynamically:", e);
+    }
+
+    const isIpError = results.some(r => r.data && (r.data.code === -99 || r.data.code === "-99" || (r.data.message && r.data.message.includes("IP"))));
+
+    let displayMessage = "가족간병인 등록 알림톡/문자 발송이 완료되었습니다.";
+    if (!anySuccess) {
+      if (isIpError) {
+        displayMessage = `[알리고 IP 허용 오류] 알리고에 등록되지 않은 서버 IP(${outboundIp})에서 발송을 시도했습니다. 알리고 사이트의 [발송서버 IP등록] 메뉴에 현재 우리 서버 IP인 '${outboundIp}'를 등록하신 후 다시 신청서를 제출해 주세요.`;
+      } else {
+        const errorDetails = results.map(r => `[${r.role}] ${r.data ? (r.data.message || JSON.stringify(r.data)) : r.error}`).join(', ');
+        displayMessage = `알림톡 발송 실패 사유: ${errorDetails} (현재 서버 Outbound IP: ${outboundIp})`;
+      }
+    }
+
     return res.json({
       success: anySuccess,
       mode: "live",
-      message: anySuccess 
-        ? "가족간병인 등록 알림톡/문자 발송이 완료되었습니다." 
-        : "알림톡 발송 중 일부 혹은 전체 오류가 발생했습니다.",
+      message: displayMessage,
       recipients: results,
       msg
     });
