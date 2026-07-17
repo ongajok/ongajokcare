@@ -56,10 +56,10 @@ app.post("/api/send-alimtalk", async (req, res) => {
     // Retrieve credentials from environment variables
     const apiKey = process.env.ALIGO_API_KEY;
     const userId = process.env.ALIGO_USER_ID;
-    const senderKey = process.env.ALIGO_SENDER_KEY;
+    const senderKey = process.env.ALIGO_SENDER_KEY || "90393b608b562a491a73e74e7e5331b8b41ba0e0";
     const senderPhone = process.env.ALIGO_SENDER_PHONE || "01095207839";
 
-    const isConfigured = apiKey && apiKey !== "" && userId && userId !== "" && senderKey && senderKey !== "";
+    const isConfigured = apiKey && apiKey !== "" && userId && userId !== "";
 
     const recipients = [
       { phone: caregiverPhone, role: "간병인" },
@@ -68,12 +68,12 @@ app.post("/api/send-alimtalk", async (req, res) => {
     ];
 
     if (!isConfigured) {
-      console.warn("⚠️ [Aligo API Simulation] Environment secrets are not configured. Simulating delivery.");
+      console.warn("⚠️ [Aligo API Live Send Failed] Environment secrets (ALIGO_API_KEY, ALIGO_USER_ID) are not configured.");
       return res.json({
-        success: true,
-        mode: "simulated",
-        message: "알리고 API 설정(API KEY 등)이 감지되지 않아 안전하게 시뮬레이션 발송을 수행했습니다.",
-        recipients: recipients.map(r => ({ phone: r.phone, role: r.role, success: true })),
+        success: false,
+        mode: "error_config",
+        message: "알리고 API 인증 키(ALIGO_API_KEY, ALIGO_USER_ID)가 환경설정에 누락되어 실제 전송이 불가능합니다. AI Studio의 Settings 메뉴에서 변수를 등록해 주세요. (발신키 90393b6... 및 템플릿 UJ_5407 연동은 완성되었습니다)",
+        recipients: recipients.map(r => ({ phone: r.phone, role: r.role, success: false })),
         msg
       });
     }

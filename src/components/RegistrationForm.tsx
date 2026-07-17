@@ -143,8 +143,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
             ? {
                 ...prev,
                 isSending: false,
-                mode: "simulated",
-                statusMessage: "서버와의 연동 통신 중 오류가 발생하여 시뮬레이션으로 전송했습니다.",
+                mode: "error_config",
+                statusMessage: "서버와의 연동 통신 중 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
               }
             : null
         );
@@ -695,16 +695,26 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
                       notificationModal.mode === "simulated"
                         ? "bg-amber-50 text-amber-800 border-amber-200"
+                        : notificationModal.mode === "error_config"
+                        ? "bg-rose-50 text-rose-800 border-rose-200"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
                       <p className="flex items-center gap-1 text-xs font-black">
-                        <Check className="w-3.5 h-3.5" />
-                        {notificationModal.mode === "simulated" ? "알리고 발송 완료 (시뮬레이션)" : "실시간 발송 완료"}
+                        {notificationModal.mode === "error_config" ? (
+                          <X className="w-4 h-4 text-rose-600" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        )}
+                        {notificationModal.mode === "simulated"
+                          ? "알리고 발송 완료 (시뮬레이션)"
+                          : notificationModal.mode === "error_config"
+                          ? "알리고 API 설정 필요 (실시간 전송)"
+                          : "실시간 실제 발송 완료"}
                       </p>
-                      <p className="text-[9px] text-slate-500 font-medium leading-relaxed">
+                      <p className="text-[9px] text-slate-500 font-semibold leading-relaxed">
                         {notificationModal.statusMessage || (notificationModal.mode === "simulated"
                           ? "API 키 미설정으로 가상 전송을 완료했습니다. 검수 완료 후 .env 설정 시 실제 발송됩니다."
-                          : "가족간병인 등록 알림이 카카오톡 및 문자로 발송되었습니다.")}
+                          : "가족간병 등록 신청서 알림이 간병인, 보호자, 협회 고객센터 연락처로 실시간 전송되었습니다.")}
                       </p>
                     </div>
                   )}
