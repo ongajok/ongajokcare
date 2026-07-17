@@ -53,9 +53,9 @@ app.post("/api/send-alimtalk", async (req, res) => {
 본 수신 고지는 증빙 보존용으로 발송되었습니다.
 온가족간병협회 고객센터: 010-9520-7839`;
 
-    // Retrieve credentials from environment variables
-    const apiKey = process.env.ALIGO_API_KEY;
-    const userId = process.env.ALIGO_USER_ID;
+    // Retrieve credentials from environment variables with robust defaults requested by the user
+    const apiKey = process.env.ALIGO_API_KEY || "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
+    const userId = process.env.ALIGO_USER_ID || "ongajok1090";
     const senderKey = process.env.ALIGO_SENDER_KEY || "90393b608b562a491a73e74e7e5331b8b41ba0e0";
     const senderPhone = process.env.ALIGO_SENDER_PHONE || "01095207839";
 
