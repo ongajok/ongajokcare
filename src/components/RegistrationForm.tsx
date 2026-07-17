@@ -653,9 +653,12 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
               {/* Body */}
               <div className="bg-white p-5 space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-blue-900 font-extrabold text-[10px] border border-slate-200">
-                    溫
-                  </div>
+                  <img 
+                    src="https://i.postimg.cc/Tw4SQMtk/ongajoklogo.png" 
+                    alt="온가족간병협회 로고" 
+                    className="w-9 h-9 object-contain rounded-full border border-slate-200 bg-white"
+                    referrerPolicy="no-referrer"
+                  />
                   <div>
                     <h4 className="text-xs font-black text-slate-800">온가족간병협회</h4>
                     <p className="text-[9px] text-slate-400 font-bold">공식 알림 채널</p>
