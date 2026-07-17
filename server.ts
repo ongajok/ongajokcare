@@ -102,7 +102,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
       params.append("failover_msg_1", msg);
 
       try {
-        const response = await fetch("https://apis.aligo.in/akv10/alimtalk/send/", {
+        const response = await fetch("https://kakaoapi.aligo.in/akv10/alimtalk/send/", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded"
