@@ -695,35 +695,77 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                 {/* Section 2: Financial Conditions */}
                 <div className="space-y-2">
                   <h4 className="text-xs font-black text-[#1e3a8a]">수수료 및 정산 가이드</h4>
-                  <table className="w-full text-[10px] border border-slate-200 border-collapse table-auto">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="px-2.5 py-1.5 text-left font-bold text-slate-600 border-r border-slate-200 w-[120px] whitespace-nowrap">구분</th>
-                        <th className="px-2.5 py-1.5 text-right font-bold text-slate-600 w-[110px] whitespace-nowrap">책정 금액 (원)</th>
-                        <th className="px-3 py-1.5 text-left font-bold text-slate-600 border-l border-slate-200">지급 및 정산 정책</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-slate-200">
-                        <th className="px-2.5 py-2 text-left font-bold text-slate-800 border-r border-slate-200 w-[120px] whitespace-nowrap">8시간 이상(일급)</th>
-                        <td className="px-2.5 py-2 text-right font-black text-slate-900 w-[110px] whitespace-nowrap">{formData.caregivingFeeDay} 원</td>
-                        <td className="px-3 py-2 text-[9px] text-slate-500 border-l border-slate-200 leading-relaxed" rowSpan={2}>
-                          - "구인자"는 최종 간병 업무가 성실히 종료된 후 "구직자"의 개인 지정 계좌로 안전하게 직접 계좌이체하여 정산 완료한다. <span className="text-[#e11d48] font-black">(※ 주의: 원활한 입금 확인을 위해 이체 시 반드시 환자 성명과 '간병비' 단어(예: 환자명간병비)를 결합하여 기재해 주십시오.)</span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-slate-200">
-                        <th className="px-2.5 py-2 text-left font-bold text-slate-800 border-r border-slate-200 w-[120px] whitespace-nowrap">8시간 미만(시급)</th>
-                        <td className="px-2.5 py-2 text-right font-black text-slate-900 w-[110px] whitespace-nowrap">{formData.caregivingFeeHour} 원</td>
-                      </tr>
-                      <tr className="border-b border-slate-200">
-                        <th className="px-2.5 py-2 text-left font-bold text-slate-800 border-r border-slate-200 text-[#b45309] w-[120px] whitespace-nowrap">협회 중개 수수료</th>
-                        <td className="px-2.5 py-2 text-right font-black text-[#b45309] w-[110px] whitespace-nowrap">{formData.referralFee} 원</td>
-                        <td className="px-3 py-2 text-[9px] text-[#b45309]/80 border-l border-slate-200 leading-relaxed">
-                          - 협회 중개 수수료는 1일 기준 4,000원으로 부과된다. [수수료 입금계좌: 국민은행 838901-04-167095 (예금주: 석은영 온가족간병협회)]
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  
+                  {/* Desktop & Print View: Perfect, balanced column proportions */}
+                  <div className="hidden sm:block print:block overflow-x-auto">
+                    <table className="w-full text-[10px] border border-slate-200 border-collapse table-fixed">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                          <th className="px-3 py-1.5 text-left font-bold border-r border-slate-200 w-[120px]">구분</th>
+                          <th className="px-3 py-1.5 text-right font-bold w-[110px]">책정 금액 (원)</th>
+                          <th className="px-4 py-1.5 text-left font-bold border-l border-slate-200">지급 및 정산 정책</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-slate-200">
+                          <th className="px-3 py-2 text-left font-bold text-slate-800 border-r border-slate-200 bg-slate-50/20">8시간 이상(일급)</th>
+                          <td className="px-3 py-2 text-right font-black text-slate-900">{formData.caregivingFeeDay} 원</td>
+                          <td className="px-4 py-2 text-[9px] text-slate-500 border-l border-slate-200 leading-relaxed" rowSpan={2}>
+                            - "구인자"는 최종 간병 업무가 성실히 종료된 후 "구직자"의 지정 계좌로 직접 계좌이체하여 정산 완료한다.
+                            <span className="text-[#e11d48] font-bold block mt-1">(※ 주의: 이체 시 반드시 환자 성명과 '간병비' 단어(예: 환자명간병비)를 기재해 주십시오.)</span>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-200">
+                          <th className="px-3 py-2 text-left font-bold text-slate-800 border-r border-slate-200 bg-slate-50/20">8시간 미만(시급)</th>
+                          <td className="px-3 py-2 text-right font-black text-slate-900">{formData.caregivingFeeHour} 원</td>
+                        </tr>
+                        <tr className="border-b border-slate-200">
+                          <th className="px-3 py-2 text-left font-bold text-[#b45309] border-r border-slate-200 bg-amber-50/10">협회 중개 수수료</th>
+                          <td className="px-3 py-2 text-right font-black text-[#b45309] bg-amber-50/10">{formData.referralFee} 원</td>
+                          <td className="px-4 py-2 text-[9px] text-[#b45309]/80 border-l border-slate-200 leading-relaxed">
+                            - 협회 중개 수수료는 1일 기준 4,000원으로 부과된다. [수수료 입금계좌: 국민은행 838901-04-167095 (예금주: 석은영 온가족간병협회)]
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile View: Beautiful, readable stacked block cards */}
+                  <div className="block sm:hidden print:hidden space-y-2">
+                    <div className="border border-slate-200 rounded-xl overflow-hidden text-[11px] bg-white divide-y divide-slate-150">
+                      {/* 8시간 이상 (일급) */}
+                      <div className="p-3 space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md text-[10px]">8시간 이상 (일급)</span>
+                          <span className="font-black text-slate-900 text-xs">{formData.caregivingFeeDay} 원</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-2 text-[10px] text-slate-600 leading-relaxed">
+                          <p className="font-bold text-slate-700 mb-0.5">• 지급 및 정산 정책:</p>
+                          <p>"구인자"는 최종 간병 업무가 성실히 종료된 후 "구직자"의 지정 계좌로 이체합니다.</p>
+                          <p className="text-[#e11d48] font-bold mt-0.5">(※ 주의: 이체 시 반드시 환자 성명과 '간병비' 단어(예: 환자명간병비)를 기재해 주십시오.)</p>
+                        </div>
+                      </div>
+
+                      {/* 8시간 미만 (시급) */}
+                      <div className="p-3 flex justify-between items-center">
+                        <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md text-[10px]">8시간 미만 (시급)</span>
+                        <span className="font-black text-slate-900 text-xs">{formData.caregivingFeeHour} 원</span>
+                      </div>
+
+                      {/* 협회 중개 수수료 */}
+                      <div className="p-3 space-y-1.5 bg-amber-50/10">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-[#b45309] bg-amber-50 px-2 py-0.5 rounded-md text-[10px]">협회 중개 수수료</span>
+                          <span className="font-black text-[#b45309] text-xs">{formData.referralFee} 원</span>
+                        </div>
+                        <div className="bg-amber-50/30 rounded-lg p-2 text-[10px] text-[#b45309]/95 leading-relaxed">
+                          <p className="font-bold text-slate-700 mb-0.5">• 수수료 납부 정책:</p>
+                          <p>협회 중개 수수료는 1일 기준 4,000원으로 부과됩니다.</p>
+                          <p className="font-extrabold text-slate-800 mt-0.5">[국민은행 838901-04-167095 (예금주: 석은영 온가족간병협회)]</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Section 3: Standard terms */}

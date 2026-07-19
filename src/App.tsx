@@ -177,13 +177,13 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#registration") {
         setCurrentView("registration");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo(0, 0);
       } else if (hash === "#contract") {
         setCurrentView("contract");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo(0, 0);
       } else if (hash === "#log") {
         setCurrentView("log");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo(0, 0);
       } else if (hash === "#home" || hash === "") {
         setCurrentView("home");
       }
@@ -213,7 +213,7 @@ export default function App() {
   const handleScrollToSection = (id: string) => {
     if (id === "registration") {
       setCurrentView("registration");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
       return;
     }
     const element = document.getElementById(id);
@@ -349,7 +349,7 @@ export default function App() {
             <button
               onClick={() => {
                 setCurrentView("registration");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo(0, 0);
               }}
               className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
             >
@@ -397,7 +397,7 @@ export default function App() {
               whileTap={{ scale: 0.9 }}
               onClick={() => {
                 setCurrentView("registration");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo(0, 0);
               }}
               className="p-2.5 bg-[#f43f5e] text-white hover:bg-[#e11d48] rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center"
               title="가족간병 등록신청"
@@ -435,7 +435,8 @@ export default function App() {
       {/* ========================================================= */}
       {/* MOVIE-POSTER STYLE CINEMATIC HERO BANNER */}
       {/* ========================================================= */}
-      <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 pb-12">
+      {currentView === "home" && (
+        <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 pb-12">
         <div 
           onMouseMove={handleHeroMouseMove}
           onMouseLeave={handleHeroMouseLeave}
@@ -638,7 +639,7 @@ export default function App() {
               <button
                 onClick={() => {
                   setCurrentView("registration");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo(0, 0);
                 }}
                 className="w-full text-left p-4 bg-gradient-to-r from-[#fef08a] via-[#facc15] to-[#eab308] text-amber-950 rounded-2xl shadow-[0_12px_28px_rgba(234,179,8,0.4),0_0_15px_rgba(254,240,138,0.25)] border-b-4 border-[#a16207] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/45 flex items-center justify-between"
               >
@@ -716,6 +717,7 @@ export default function App() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ========================================================= */}
       {/* COLLAPSIBLE ADMIN CONTROL CMS PANEL */}
@@ -895,11 +897,11 @@ export default function App() {
               }}
               onGoToRegistration={() => {
                 setCurrentView("registration");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo(0, 0);
               }}
               onGoToCaregivingLog={() => {
                 setCurrentView("log");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo(0, 0);
               }}
             />
           </motion.div>
@@ -927,7 +929,7 @@ export default function App() {
               onOpenLegalModal={setLegalModalType}
               onBack={() => {
                 setCurrentView("home");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo(0, 0);
               }}
             />
           </motion.div>
