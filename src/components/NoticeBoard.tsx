@@ -10,9 +10,21 @@ interface NoticeBoardProps {
   isAdmin: boolean;
   onAddNotice: (post: Omit<NoticePost, "id" | "date">) => void;
   onDeleteNotice: (id: string) => void;
+  onOpenIntro?: () => void;
+  onGoToRegistration?: () => void;
+  onGoToCaregivingLog?: () => void;
 }
 
-export default function NoticeBoard({ config, notices, isAdmin, onAddNotice, onDeleteNotice }: NoticeBoardProps) {
+export default function NoticeBoard({ 
+  config, 
+  notices, 
+  isAdmin, 
+  onAddNotice, 
+  onDeleteNotice,
+  onOpenIntro,
+  onGoToRegistration,
+  onGoToCaregivingLog
+}: NoticeBoardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>("notice-1");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -244,6 +256,62 @@ export default function NoticeBoard({ config, notices, isAdmin, onAddNotice, onD
                         <p className="text-xs md:text-sm text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
                           {notice.content}
                         </p>
+
+                        {/* Interactive CTA Buttons */}
+                        {notice.title.includes("상담 가능 시간") && (
+                          <div className="mt-4 flex">
+                            <a
+                              href={config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#fee500] hover:bg-[#e6cf00] text-[#191919] font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-[#f5dd00]"
+                            >
+                              <span className="text-sm">💬</span>
+                              <span>카카오톡 1:1상담</span>
+                            </a>
+                          </div>
+                        )}
+
+                        {notice.title.includes("서비스 특징") && (
+                          <div className="mt-4 flex">
+                            <button
+                              type="button"
+                              onClick={onOpenIntro}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1e3a8a] hover:bg-[#152a64] text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-blue-900"
+                            >
+                              <span>🏢</span>
+                              <span>온가족간병협회 인사말 바로가기</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {(notice.title.includes("등록은 언제") || 
+                          notice.title.includes("등록 절차는")) && (
+                          <div className="mt-4 flex">
+                            <button
+                              type="button"
+                              onClick={onGoToRegistration}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-emerald-700 animate-pulse"
+                            >
+                              <span>✍️</span>
+                              <span>가족간병 즉시신청</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {(notice.title.includes("작성일지 작성법") || 
+                          notice.title.includes("간병일지 작성법")) && (
+                          <div className="mt-4 flex">
+                            <button
+                              type="button"
+                              onClick={onGoToCaregivingLog}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-indigo-700 animate-bounce"
+                            >
+                              <span>📋</span>
+                              <span>간병일지 작성</span>
+                            </button>
+                          </div>
+                        )}
                         <div className="mt-4 pt-3 border-t border-dashed border-slate-200/60 flex items-center justify-between text-[10px] text-slate-400 font-bold">
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-slate-400" />

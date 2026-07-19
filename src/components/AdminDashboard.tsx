@@ -1,6 +1,6 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion } from "motion/react";
-import { Settings2, ShieldCheck, Phone, MapPin, Link2, FileKey2, MessageSquareText, Users, Eye, HelpCircle } from "lucide-react";
+import { Settings2, ShieldCheck, Phone, MapPin, Link2, FileKey2, MessageSquareText, Users, Eye, HelpCircle, FileText, ClipboardList, Trash2, Printer, X } from "lucide-react";
 import { WebsiteConfig, CaregiverRegistration } from "../types";
 import MascotOni from "./MascotOni";
 
@@ -12,7 +12,13 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ config, onUpdateConfig, registrations, onClearRegistrations }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"text" | "mascot" | "registrations">("text");
+  const [activeTab, setActiveTab] = useState<"text" | "mascot" | "registrations" | "contracts" | "logs">("text");
+  
+  // Local states for loaded contracts and logs
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [selectedContract, setSelectedContract] = useState<any | null>(null);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   // Local state for configuration inputs
   const [inputs, setInputs] = useState({
@@ -27,6 +33,47 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
     oniFormText: config.oniFormText,
     oniNoticeText: config.oniNoticeText,
   });
+
+  const refreshContractsAndLogs = () => {
+    try {
+      const savedContracts = localStorage.getItem("ongajok_contracts");
+      if (savedContracts) {
+        setContracts(JSON.parse(savedContracts));
+      } else {
+        setContracts([]);
+      }
+      const savedLogs = localStorage.getItem("ongajok_logs");
+      if (savedLogs) {
+        setLogs(JSON.parse(savedLogs));
+      } else {
+        setLogs([]);
+      }
+    } catch (e) {
+      console.error("Error loading administrative documents:", e);
+    }
+  };
+
+  useEffect(() => {
+    refreshContractsAndLogs();
+  }, []);
+
+  const handleDeleteContract = (id: string) => {
+    if (confirm("이 간병인 중개 계약서 내역을 행정 관리 명부에서 영구 삭제하시겠습니까? (서명 이미지도 즉시 폐기됩니다)")) {
+      const updated = contracts.filter((c) => c.id !== id);
+      localStorage.setItem("ongajok_contracts", JSON.stringify(updated));
+      setContracts(updated);
+      alert("계약서가 안전하게 영구 폐기 처리되었습니다.");
+    }
+  };
+
+  const handleDeleteLog = (id: string) => {
+    if (confirm("이 간병인 돌봄일지 내역을 행정 기록부에서 영구 삭제하시겠습니까?")) {
+      const updated = logs.filter((l) => l.id !== id);
+      localStorage.setItem("ongajok_logs", JSON.stringify(updated));
+      setLogs(updated);
+      alert("돌봄일지가 안전하게 영구 폐기 처리되었습니다.");
+    }
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,10 +115,10 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-800 mb-6 gap-2">
+      <div className="flex border-b border-slate-800 mb-6 gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
         <button
           onClick={() => setActiveTab("text")}
-          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === "text"
               ? "bg-[#1e3a8a] text-white shadow-[0_-2px_10px_rgba(30,58,138,0.15)]"
               : "text-slate-400 hover:text-white"
@@ -82,7 +129,7 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
         </button>
         <button
           onClick={() => setActiveTab("mascot")}
-          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === "mascot"
               ? "bg-[#1e3a8a] text-white shadow-[0_-2px_10px_rgba(30,58,138,0.15)]"
               : "text-slate-400 hover:text-white"
@@ -93,14 +140,42 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
         </button>
         <button
           onClick={() => setActiveTab("registrations")}
-          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === "registrations"
               ? "bg-[#1e3a8a] text-white shadow-[0_-2px_10px_rgba(30,58,138,0.15)]"
               : "text-slate-400 hover:text-white"
           }`}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>등록된 간병인 명단 ({registrations.length})</span>
+          <span>등록 신청 ({registrations.length})</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("contracts");
+            refreshContractsAndLogs();
+          }}
+          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+            activeTab === "contracts"
+              ? "bg-[#1e3a8a] text-white shadow-[0_-2px_10px_rgba(30,58,138,0.15)]"
+              : "text-slate-400 hover:text-white"
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>중개 계약서 ({contracts.length})</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("logs");
+            refreshContractsAndLogs();
+          }}
+          className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+            activeTab === "logs"
+              ? "bg-[#1e3a8a] text-white shadow-[0_-2px_10px_rgba(30,58,138,0.15)]"
+              : "text-slate-400 hover:text-white"
+          }`}
+        >
+          <ClipboardList className="w-3.5 h-3.5" />
+          <span>작성된 일지 ({logs.length})</span>
         </button>
       </div>
 
@@ -298,21 +373,21 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
               <table className="w-full text-left border-collapse text-[11px]">
                 <thead>
                   <tr className="bg-slate-800 border-b border-slate-700 text-slate-300 font-extrabold">
-                    <th className="p-3">간병인 (관계)</th>
+                    <th className="p-3">간병인 성명</th>
                     <th className="p-3">생년월일</th>
                     <th className="p-3">환자명</th>
                     <th className="p-3">병원명</th>
                     <th className="p-3">가입 보험사</th>
                     <th className="p-3">간병비</th>
                     <th className="p-3">연락처 (간병인 / 보호자)</th>
-                    <th className="p-3">등록시간</th>
+                    <th className="p-3">접수 일시</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800 font-semibold text-slate-200">
                   {registrations.map((reg) => (
                     <tr key={reg.id} className="hover:bg-slate-800/50">
                       <td className="p-3 text-white font-extrabold">
-                        {reg.caregiverName} ({reg.relationship})
+                        {reg.caregiverName}
                       </td>
                       <td className="p-3 text-rose-300 font-mono text-[10px] select-all bg-rose-950/20 px-1.5 py-0.5 rounded border border-rose-900/40">
                         {reg.caregiverSsn || "-"}
@@ -325,8 +400,16 @@ export default function AdminDashboard({ config, onUpdateConfig, registrations, 
                         <p>간: {reg.caregiverPhone}</p>
                         <p className="text-slate-400">보: {reg.guardianPhone}</p>
                       </td>
-                      <td className="p-3 text-[10px] text-slate-400">
-                        {new Date(reg.createdAt).toLocaleDateString()}
+                      <td className="p-3 text-[10px] text-emerald-400 font-bold whitespace-nowrap">
+                        {new Date(reg.createdAt).toLocaleString("ko-KR", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false
+                        })}
                       </td>
                     </tr>
                   ))}

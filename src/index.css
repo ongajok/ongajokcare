@@ -12,3 +12,44 @@
 .group:hover .group-hover\:animate-\[shimmer_1\.5s_infinite\] {
   animation: shimmer 1.5s infinite;
 }
+
+@media print {
+  /* Hide all layout structures by default */
+  html, body, #root, #root > div, header, footer, .print\:hidden, [class*="bg-gradient"], button, form {
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make only the target printable sheets visible and positioned cleanly */
+  #printable-contract, #printable-contract *,
+  #printable-log, #printable-log * {
+    visibility: visible;
+  }
+
+  #printable-contract, #printable-log {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 2.5cm 2cm !important; /* Standard office document margins */
+    margin: 0 !important;
+    page-break-after: avoid;
+    page-break-before: avoid;
+  }
+
+  /* Ensure background colors and images print properly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

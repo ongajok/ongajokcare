@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Phone, MessageSquare, Edit3, Lock, Unlock, Settings, X, Check, HelpCircle, ArrowDown } from "lucide-react";
+import { Phone, MessageSquare, Edit3, Lock, Unlock, Settings, X, Check, HelpCircle, ArrowDown, FileText, ClipboardList, ChevronDown, MapPin, Award } from "lucide-react";
 import { WebsiteConfig, NoticePost, CaregiverRegistration } from "./types";
 import { DEFAULT_CONFIG, INITIAL_NOTICES } from "./data";
 
@@ -15,6 +15,8 @@ import MobileFloatingButtons from "./components/MobileFloatingButtons";
 import Footer from "./components/Footer";
 import { CompanyLogo } from "./components/CompanyLogo";
 import { LegalModals, LegalModalType } from "./components/LegalModals";
+import CaregiverContract from "./components/CaregiverContract";
+import CaregivingLog from "./components/CaregivingLog";
 
 // Real generated image path from step response
 const HERO_FAMILY_IMAGE = "https://i.postimg.cc/4x6hRz3m/gajogsajin.png";
@@ -31,6 +33,9 @@ export default function App() {
   const handleHeroMouseLeave = () => {
     setHeroTilt({ x: 0, y: 0 });
   };
+
+  // View state: 'home' | 'contract' | 'log' | 'registration'
+  const [currentView, setCurrentView] = useState<"home" | "contract" | "log" | "registration">("home");
 
   // Website states with LocalStorage persistence
   const [config, setConfig] = useState<WebsiteConfig>(() => {
@@ -53,12 +58,94 @@ export default function App() {
 
   const [notices, setNotices] = useState<NoticePost[]>(() => {
     const saved = localStorage.getItem("ongajok_notices_v2");
-    return saved ? JSON.parse(saved) : INITIAL_NOTICES;
+    if (saved) {
+      try {
+        const parsed: NoticePost[] = JSON.parse(saved);
+        return parsed.map(notice => {
+          if (notice.id === "notice-5" || notice.title.includes("등록은 언제")) {
+            return {
+              ...notice,
+              content: "대부분의 보험 📋 약관상 실제 간병이 시작되기 전에 협회에 등록이 완료되어야 정상적인 청구 및 심사가 가능합니다. 퇴원 후에 소급하여 등록하는 것은 심사상 불인정되거나 매우 어려울 수 있으니, 입원 즉시 등록해 주세요!\n\n궁금하신 부분은 언제든 협회 고객센터(010-9520-7839)로 문의해 주시기 바랍니다.\n\n지금 바로 간병인을 등록하시려면 하단의 👉 [가족간병 즉시신청] 버튼을 누르시거나 카카오톡 상담을 이용해 주세요."
+            };
+          }
+          if (
+            notice.id === "notice-3" || 
+            notice.title.includes("간병과 비용") || 
+            notice.title.includes("알선 중개수수료") || 
+            notice.title.includes("비용은 어떻게")
+          ) {
+            return {
+              ...notice,
+              title: "비용은 어떻게 적용되나요?",
+              content: "1일 기준 4,000원의 합리적인 행정 수수료로 소중한 가족의 건강과 행복을 온 마음으로 응원하겠습니다."
+            };
+          }
+          return notice;
+        });
+      } catch (e) {
+        return INITIAL_NOTICES;
+      }
+    }
+    return INITIAL_NOTICES;
   });
 
   const [registrations, setRegistrations] = useState<CaregiverRegistration[]>(() => {
     const saved = localStorage.getItem("ongajok_registrations");
-    return saved ? JSON.parse(saved) : [];
+    let parsed: CaregiverRegistration[] = [];
+    if (saved) {
+      try {
+        parsed = JSON.parse(saved);
+      } catch (e) {
+        parsed = [];
+      }
+    }
+    
+    if (!parsed || parsed.length === 0) {
+      parsed = [
+        {
+          id: "reg-mock-1",
+          caregiverName: "온가족",
+          caregiverPhone: "010-0000-0000",
+          caregiverSsn: "751015-2******",
+          relationship: "자녀",
+          patientName: "석은영",
+          guardianName: "온가족",
+          guardianPhone: "010-0000-0000",
+          insuranceCompany: "KB손해보험",
+          hospitalName: "서울대병원",
+          admissionDate: "2026-07-15",
+          caregivingFee: "140,000원",
+          createdAt: new Date().toISOString()
+        }
+      ];
+    } else {
+      parsed = parsed.map((reg) => {
+        let updated = { ...reg };
+        let isModified = false;
+        if (updated.caregiverName === "석은영") {
+          updated.caregiverName = "온가족";
+          isModified = true;
+        }
+        if (updated.caregiverPhone === "010-8967-7839" || updated.caregiverPhone === "") {
+          updated.caregiverPhone = "010-0000-0000";
+          isModified = true;
+        }
+        if (updated.patientName === "홍길동") {
+          updated.patientName = "석은영";
+          isModified = true;
+        }
+        if (updated.guardianName === "홍길동") {
+          updated.guardianName = "온가족";
+          isModified = true;
+        }
+        if (updated.guardianPhone === "010-8967-7839" || updated.guardianPhone === "" || updated.guardianPhone === "010-0000-0000") {
+          updated.guardianPhone = "010-0000-0000";
+          isModified = true;
+        }
+        return updated;
+      });
+    }
+    return parsed;
   });
 
   // Admin access state
@@ -67,7 +154,12 @@ export default function App() {
   const [adminPinInput, setAdminPinInput] = useState("");
   const [legalModalType, setLegalModalType] = useState<LegalModalType>(null);
 
-  // Sync to LocalStorage
+  // Accordion Expand/Collapse State (Initially collapsed per user request)
+  const [isIntroExpanded, setIsIntroExpanded] = useState(false);
+  const [isProcessExpanded, setIsProcessExpanded] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  // Sync to LocalStorage & Hash Routing
   useEffect(() => {
     localStorage.setItem("ongajok_config", JSON.stringify(config));
   }, [config]);
@@ -80,8 +172,50 @@ export default function App() {
     localStorage.setItem("ongajok_registrations", JSON.stringify(registrations));
   }, [registrations]);
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === "#registration") {
+        setCurrentView("registration");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (hash === "#contract") {
+        setCurrentView("contract");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (hash === "#log") {
+        setCurrentView("log");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (hash === "#home" || hash === "") {
+        setCurrentView("home");
+      }
+    };
+
+    // Run once on load
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  // Sync hash state with currentView
+  useEffect(() => {
+    if (currentView === "home") {
+      if (["#registration", "#contract", "#log"].includes(window.location.hash.toLowerCase())) {
+        window.history.pushState(null, "", window.location.pathname + window.location.search);
+      }
+    } else {
+      if (window.location.hash.toLowerCase() !== `#${currentView}`) {
+        window.location.hash = currentView;
+      }
+    }
+  }, [currentView]);
+
   // Section smooth scrolling helper
   const handleScrollToSection = (id: string) => {
+    if (id === "registration") {
+      setCurrentView("registration");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -168,28 +302,69 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-md border-b border-white/30 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           
-          {/* Logo Brand with double line text */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          {/* Logo Brand with elegant split 2-line text */}
+          <div className="flex items-center gap-2 cursor-pointer group select-none" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <CompanyLogo size={44} />
-            <div className="flex flex-col select-none">
-              <span className="text-xs font-black tracking-widest text-[#1e3a8a] leading-tight">온가족</span>
-              <span className="text-sm font-black tracking-tighter text-[#1e3a8a] leading-none">간병협회</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[10px] md:text-xs font-bold tracking-widest text-slate-500 group-hover:text-slate-700 transition-colors">온가족</span>
+              <span className="text-xs md:text-sm lg:text-base font-black tracking-tighter text-[#1e3a8a]">간병협회</span>
             </div>
           </div>
 
-          {/* Desktop Navigation links */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-black text-slate-600">
-            <button onClick={() => handleScrollToSection("introduction")} className="hover:text-[#1e3a8a] hover:scale-105 transition-all cursor-pointer">
-              협회소개
+          {/* Desktop Navigation links - split into elegant 2-line layout */}
+          <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-slate-700">
+            <button
+              onClick={() => {
+                setCurrentView("home");
+                setIsIntroExpanded(true);
+                setTimeout(() => handleScrollToSection("accordion-introduction"), 100);
+              }}
+              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+            >
+              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">협회</span>
+              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">소개</span>
             </button>
-            <button onClick={() => handleScrollToSection("process")} className="hover:text-[#1e3a8a] hover:scale-105 transition-all cursor-pointer">
-              신청절차
+            <button
+              onClick={() => {
+                setCurrentView("home");
+                setIsProcessExpanded(true);
+                setTimeout(() => handleScrollToSection("accordion-process"), 100);
+              }}
+              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+            >
+              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">간병</span>
+              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">신청절차</span>
             </button>
-            <button onClick={() => handleScrollToSection("registration")} className="hover:text-[#1e3a8a] hover:scale-105 transition-all cursor-pointer">
-              가족간병 등록
+            <button
+              onClick={() => {
+                setCurrentView("home");
+                setIsMapExpanded(true);
+                setTimeout(() => handleScrollToSection("accordion-map"), 100);
+              }}
+              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+            >
+              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">오시는</span>
+              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">길</span>
             </button>
-            <button onClick={() => handleScrollToSection("notices")} className="hover:text-[#1e3a8a] hover:scale-105 transition-all cursor-pointer">
-              게시판
+            <button
+              onClick={() => {
+                setCurrentView("registration");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+            >
+              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">가족간병</span>
+              <span className="text-xs lg:text-sm font-black text-[#e11d48] group-hover:text-[#be123c] transition-colors">즉시신청</span>
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView("home");
+                handleScrollToSection("notices");
+              }}
+              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+            >
+              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">게시</span>
+              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">판</span>
             </button>
           </nav>
 
@@ -220,7 +395,10 @@ export default function App() {
             {/* Header Direct Caregiver Registration Form Nav Icon */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => handleScrollToSection("registration")}
+              onClick={() => {
+                setCurrentView("registration");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               className="p-2.5 bg-[#f43f5e] text-white hover:bg-[#e11d48] rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center"
               title="가족간병 등록신청"
             >
@@ -262,7 +440,7 @@ export default function App() {
           onMouseMove={handleHeroMouseMove}
           onMouseLeave={handleHeroMouseLeave}
           style={{ perspective: "1000px" }}
-          className="relative rounded-3xl overflow-hidden shadow-[0_35px_70px_rgba(0,0,0,0.3),inset_0_2px_10px_rgba(255,255,255,0.15)] h-[440px] md:h-[480px] flex items-center justify-center border border-white/10 transition-all duration-500 cursor-pointer"
+          className="relative rounded-3xl overflow-hidden shadow-[0_35px_70px_rgba(0,0,0,0.3),inset_0_2px_10px_rgba(255,255,255,0.15)] min-h-[540px] md:min-h-[580px] flex items-center justify-center border border-white/10 transition-all duration-500 cursor-pointer py-10 md:py-12"
         >
           
           {/* Multi-Layered 3D & 4D Cinematic Parallax Engine */}
@@ -419,7 +597,7 @@ export default function App() {
           <div className="absolute inset-0 bg-amber-900/10 pointer-events-none z-[2]" />
 
           {/* Slogan and details centered/bottomed on banner */}
-          <div className="absolute bottom-10 left-6 right-6 md:left-12 md:right-12 text-center md:text-left z-10 space-y-3">
+          <div className="absolute bottom-6 left-6 right-6 md:left-12 md:right-12 text-center md:text-left z-10 space-y-3">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -435,7 +613,7 @@ export default function App() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-2xl md:text-4xl font-black text-white tracking-tight leading-snug drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
+              className="text-xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             >
               아픈 가족의 곁, 가장 가까운 곳에서 <br className="hidden md:inline" /> 따뜻한 동행이 시작됩니다
             </motion.h1>
@@ -444,39 +622,85 @@ export default function App() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-xs md:text-sm text-slate-100 font-semibold leading-relaxed max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
+              className="text-xs text-slate-100 font-semibold leading-relaxed max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] hidden sm:block"
             >
               가족간병 등록부터 행정 서류 구비까지 온가족간병협회가 보호자님과 늘 함께하겠습니다.
             </motion.p>
 
-            {/* Quick 3D Banner Call-To-Action buttons */}
+            {/* 3 Premium Card Buttons in Grid (Navy, Gold, Ivory 3D Themes) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center md:justify-start gap-4 w-full"
+              className="pt-2.5 space-y-3 w-full max-w-xl mx-auto md:mx-0"
             >
+              {/* Row 1: Full-width Button Card - Shining 3D Bright Gold */}
               <button
-                onClick={() => handleScrollToSection("registration")}
-                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#1e3b8a] via-[#1e40af] to-[#2563eb] text-white font-black text-sm md:text-base rounded-2xl shadow-[0_0_35px_rgba(59,130,246,0.55),0_8px_24px_rgba(30,58,138,0.45)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0 border-t border-white/20"
+                onClick={() => {
+                  setCurrentView("registration");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="w-full text-left p-4 bg-gradient-to-r from-[#fef08a] via-[#facc15] to-[#eab308] text-amber-950 rounded-2xl shadow-[0_12px_28px_rgba(234,179,8,0.4),0_0_15px_rgba(254,240,138,0.25)] border-b-4 border-[#a16207] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/45 flex items-center justify-between"
               >
-                {/* Embedded dynamic glow overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <Edit3 className="w-5 h-5 text-white shrink-0 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
-                <span className="filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">가족간병 신청서 즉시작성</span>
+                {/* Shimmer overlay */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+                
+                <div className="flex items-center gap-3 z-10">
+                  <div className="p-2 bg-amber-950/10 rounded-xl">
+                    <Edit3 className="w-5 h-5 text-amber-950" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs md:text-sm font-black tracking-tight text-amber-950">가족간병 즉시신청</h3>
+                    <p className="text-[10px] text-amber-900 font-bold">협회 표준 시스템에 가족간병 등록 신청서를 제출합니다.</p>
+                  </div>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-amber-950/10 flex items-center justify-center group-hover:translate-x-1 transition-transform z-10">
+                  <span className="text-xs font-black text-amber-950">→</span>
+                </div>
               </button>
-              
-              <button
-                onClick={handleKakaoConsultation}
-                className="h-14 md:h-16 px-6 bg-gradient-to-r from-[#e5ca00] via-[#cca100] to-[#b38a00] text-slate-950 font-black text-sm md:text-base rounded-2xl shadow-[0_8px_24px_rgba(204,161,0,0.35)] border-b-4 border-[#6b5100] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group flex items-center justify-center gap-2.5 sm:w-[250px] md:w-[270px] shrink-0 border-t border-white/10"
-              >
-                {/* Embedded dynamic glow overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <svg viewBox="0 0 24 24" className="w-5.5 h-5.5 fill-current text-slate-950 shrink-0">
-                  <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
-                </svg>
-                <span>실시간 카카오톡 전문상담</span>
-              </button>
+
+              {/* Row 2: Left/Right Split Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Left Button Card: Caregiver Contract - Shining 3D Navy */}
+                <button
+                  onClick={() => setCurrentView("contract")}
+                  className="text-left p-4 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white rounded-2xl shadow-[0_12px_24px_rgba(30,58,138,0.35),0_0_15px_rgba(59,130,246,0.25)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer border-t border-white/20 flex flex-col justify-between h-[90px] relative overflow-hidden group"
+                >
+                  {/* Shimmer overlay */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+
+                  <div className="flex items-center gap-2 z-10">
+                    <div className="p-1.5 bg-white/15 text-white rounded-lg">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-black tracking-tight text-white">간병인 알선 및 중개 계약서</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between w-full z-10">
+                    <span className="text-[9px] text-blue-100 font-bold">계약서 조항 작성 및 날인</span>
+                    <span className="text-xs font-black text-white group-hover:translate-x-1 transition-transform">작성 →</span>
+                  </div>
+                </button>
+
+                {/* Right Button Card: Caregiving Log - Shining 3D Ivory */}
+                <button
+                  onClick={() => setCurrentView("log")}
+                  className="text-left p-4 bg-gradient-to-r from-[#fafaf6] via-[#f4f2ea] to-[#e8e4d9] text-slate-800 rounded-2xl shadow-[0_12px_24px_rgba(0,0,0,0.08),0_0_15px_rgba(255,255,255,0.8)] border-b-4 border-[#b5af9e] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer border-t border-white flex flex-col justify-between h-[90px] relative overflow-hidden group"
+                >
+                  {/* Shimmer overlay */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+
+                  <div className="flex items-center gap-2 z-10">
+                    <div className="p-1.5 bg-amber-900/10 text-amber-950 rounded-lg">
+                      <ClipboardList className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-black tracking-tight text-slate-800">간병일지 작성</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between w-full z-10">
+                    <span className="text-[9px] text-slate-500 font-bold">일일 환자 돌봄 현황 기록</span>
+                    <span className="text-xs font-black text-[#1e3a8a] group-hover:translate-x-1 transition-transform">기록 →</span>
+                  </div>
+                </button>
+              </div>
             </motion.div>
           </div>
 
@@ -514,31 +738,211 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ========================================================= */}
-      {/* ASSOCIATION INTRODUCTION (협회소개) */}
-      {/* ========================================================= */}
-      <Introduction config={config} />
+      <AnimatePresence mode="wait">
+        {currentView === "home" ? (
+          <motion.div
+            key="home-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* ========================================================= */}
+            {/* INTERACTIVE ACCORDIONS SECTION (협회소개 / 신청절차 / 오시는 길) */}
+            {/* ========================================================= */}
+            <div className="max-w-5xl mx-auto px-4 py-8 space-y-4">
+              
+              {/* Accordion 1: 협회소개 */}
+              <div id="accordion-introduction" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+                <button
+                  onClick={() => setIsIntroExpanded(!isIntroExpanded)}
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-2xl border border-blue-100 shadow-inner flex-shrink-0">
+                      <Award className="w-6 h-6 text-[#1e3a8a]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black text-[#1e3a8a]">협회 소개</h3>
+                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">온가족간병협회 대표 인사말 및 신뢰 장치 안내</p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isIntroExpanded ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="p-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </motion.div>
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isIntroExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                        <Introduction config={config} showOnly="greeting" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-      {/* ========================================================= */}
-      {/* APPLICATION PROCESS (신청절차) */}
-      {/* ========================================================= */}
-      <Process config={config} />
+              {/* Accordion 2: 간병 신청 절차 */}
+              <div id="accordion-process" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+                <button
+                  onClick={() => setIsProcessExpanded(!isProcessExpanded)}
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-100 shadow-inner flex-shrink-0">
+                      <ClipboardList className="w-6 h-6 text-emerald-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black text-[#1e3a8a]">간병 신청 절차</h3>
+                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">원클릭 간편등록 및 보험청구를 위한 가이드 라인</p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isProcessExpanded ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="p-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </motion.div>
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isProcessExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                        <Process config={config} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-      {/* ========================================================= */}
-      {/* CAREGIVER REGISTRATION FORM (가족간병 등록 신청) */}
-      {/* ========================================================= */}
-      <RegistrationForm config={config} onRegisterSubmit={handleRegisterSubmit} onOpenLegalModal={setLegalModalType} />
+              {/* Accordion 3: 오시는 길 */}
+              <div id="accordion-map" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+                <button
+                  onClick={() => setIsMapExpanded(!isMapExpanded)}
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-rose-50 text-rose-800 rounded-2xl border border-rose-100 shadow-inner flex-shrink-0">
+                      <MapPin className="w-6 h-6 text-rose-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black text-[#1e3a8a]">오시는 길</h3>
+                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">상계역 5번 출구 앞 협회 주소 및 실시간 지도</p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isMapExpanded ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="p-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </motion.div>
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isMapExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                        <Introduction config={config} showOnly="directions" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-      {/* ========================================================= */}
-      {/* NOTICE & NEWS BOARD (알림 및 소식 게시판) */}
-      {/* ========================================================= */}
-      <NoticeBoard
-        config={config}
-        notices={notices}
-        isAdmin={isAdminMode}
-        onAddNotice={handleAddNotice}
-        onDeleteNotice={handleDeleteNotice}
-      />
+            </div>
+
+            {/* ========================================================= */}
+            {/* NOTICE & NEWS BOARD (알림 및 소식 게시판) */}
+            {/* ========================================================= */}
+            <NoticeBoard
+              config={config}
+              notices={notices}
+              isAdmin={isAdminMode}
+              onAddNotice={handleAddNotice}
+              onDeleteNotice={handleDeleteNotice}
+              onOpenIntro={() => {
+                setIsIntroExpanded(true);
+                setTimeout(() => {
+                  const el = document.getElementById("accordion-introduction");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }}
+              onGoToRegistration={() => {
+                setCurrentView("registration");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onGoToCaregivingLog={() => {
+                setCurrentView("log");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          </motion.div>
+        ) : currentView === "contract" ? (
+          <motion.div
+            key="contract-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CaregiverContract onBack={() => setCurrentView("home")} phone={config.phone} />
+          </motion.div>
+        ) : currentView === "registration" ? (
+          <motion.div
+            key="registration-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RegistrationForm
+              config={config}
+              onRegisterSubmit={handleRegisterSubmit}
+              onOpenLegalModal={setLegalModalType}
+              onBack={() => {
+                setCurrentView("home");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="log-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CaregivingLog onBack={() => setCurrentView("home")} phone={config.phone} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ========================================================= */}
       {/* FOOTER & COMPLIANCES DISCLOSURES */}

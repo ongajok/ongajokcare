@@ -261,6 +261,146 @@ app.post("/api/send-alimtalk", async (req, res) => {
   }
 });
 
+// Real-time Aligo SMS API proxy endpoint for Caregiver Contract
+app.post("/api/send-contract", async (req, res) => {
+  try {
+    const {
+      clientName,
+      clientPhone,
+      caregiverName,
+      caregiverPhone,
+      patientName,
+      location,
+      caregivingFeeDay
+    } = req.body;
+
+    if (!clientName || !clientPhone || !caregiverName || !caregiverPhone || !patientName) {
+      return res.status(400).json({
+        success: false,
+        message: "필수 정보(구인자 이름, 구인자 연락처, 구직자 이름, 구직자 연락처, 환자 이름)가 누락되었습니다."
+      });
+    }
+
+    const msg = `[온가족간병협회] 중개 계약서 접수 완료
+■ 계약 상세 내역
+- 구인자(보호자): ${clientName} 님
+- 구직자(간병인): ${caregiverName} 님
+- 환자명: ${patientName} 님
+- 근무 대상지: ${location || "미지정"}
+- 일일 간병비: ${caregivingFeeDay} 원
+- 서명 완료 및 시스템 등재 처리되었습니다.
+
+온가족간병협회 고객센터: 010-9520-7839`;
+
+    let apiKey = process.env.ALIGO_API_KEY;
+    if (!apiKey || apiKey === "" || apiKey === "undefined") {
+      apiKey = "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
+    }
+
+    let userId = process.env.ALIGO_USER_ID;
+    if (!userId || userId === "" || userId === "undefined") {
+      userId = "ongajok1090";
+    }
+
+    let senderPhone = process.env.ALIGO_SENDER_PHONE;
+    if (!senderPhone || senderPhone === "" || senderPhone === "undefined") {
+      senderPhone = "01095207839";
+    }
+
+    // Recipients: client, caregiver, and Association Customer Center "010-9520-7839"
+    const recipients = [
+      { phone: clientPhone, role: "구인자(보호자)" },
+      { phone: caregiverPhone, role: "구직자(간병인)" },
+      { phone: "010-9520-7839", role: "협회 고객센터" }
+    ];
+
+    const results = [];
+    for (const recipient of recipients) {
+      const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
+      const formattedSender = senderPhone.replace(/[^0-9]/g, "");
+
+      const params = new URLSearchParams();
+      params.append("key", apiKey);
+      params.append("user_id", userId);
+      params.append("sender", formattedSender);
+      params.append("receiver", formattedReceiver);
+      params.append("msg", msg);
+      params.append("msg_type", "LMS");
+      params.append("title", "[온가족간병 중개계약]");
+
+      try {
+        const response = await fetch("https://apis.aligo.in/send/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: params.toString()
+        });
+
+        const status = response.status;
+        const resultJson: any = await response.json();
+        console.log(`📡 [Aligo SMS API Response status: ${status} for ${recipient.role}]:`, JSON.stringify(resultJson));
+
+        const isSuccess = 
+          resultJson.result_code === "1" || 
+          resultJson.result_code === 1 ||
+          resultJson.success === true;
+
+        results.push({
+          phone: recipient.phone,
+          role: recipient.role,
+          success: isSuccess,
+          data: resultJson
+        });
+      } catch (err: any) {
+        console.error(`❌ SMS Fetch Error for ${recipient.role}:`, err.message);
+        results.push({
+          phone: recipient.phone,
+          role: recipient.role,
+          success: false,
+          error: err.message
+        });
+      }
+    }
+
+    const anySuccess = results.some(r => r.success);
+
+    // Retrieve dynamic outbound IP
+    let outboundIp = "34.34.244.39";
+    try {
+      const ipRes = await fetch("https://api.ipify.org?format=json");
+      const ipData: any = await ipRes.json();
+      if (ipData && ipData.ip) {
+        outboundIp = ipData.ip;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    let displayMessage = "중개 계약서 작성 알림 문자가 정상 전송되었습니다.";
+    if (!anySuccess) {
+      const errorDetails = results.map(r => `[${r.role}] ${r.data ? (r.data.message || JSON.stringify(r.data)) : r.error}`).join(', ');
+      displayMessage = `문자 실제 전송 실패 사유: ${errorDetails} (현재 서버 Outbound IP: ${outboundIp})`;
+    }
+
+    return res.json({
+      success: anySuccess,
+      mode: "live",
+      message: displayMessage,
+      recipients: results,
+      msg
+    });
+
+  } catch (error: any) {
+    console.error("❌ Error in send-contract route:", error);
+    return res.status(500).json({
+      success: false,
+      message: "서버 내부 오류로 인해 발송 요청 처리에 실패했습니다.",
+      error: error.message
+    });
+  }
+});
+
 // Configure Vite or Static Assets serving
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

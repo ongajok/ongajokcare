@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, Lock } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, Lock, ArrowLeft } from "lucide-react";
 import { CaregiverRegistration, WebsiteConfig } from "../types";
 import { KOREAN_INSURANCE_COMPANIES } from "../data";
 import MascotOni from "./MascotOni";
@@ -9,14 +9,15 @@ interface RegistrationFormProps {
   config: WebsiteConfig;
   onRegisterSubmit: (formData: Omit<CaregiverRegistration, "id" | "createdAt">) => void;
   onOpenLegalModal: (type: "terms" | "privacy" | "community") => void;
+  onBack?: () => void;
 }
 
-export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegalModal }: RegistrationFormProps) {
+export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegalModal, onBack }: RegistrationFormProps) {
   const [formData, setFormData] = useState({
     caregiverName: "",
     caregiverPhone: "",
     caregiverSsn: "",
-    relationship: "자녀",
+    relationship: "",
     patientName: "",
     guardianName: "",
     guardianPhone: "",
@@ -42,6 +43,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     isSending: boolean;
     mode?: "simulated" | "live";
     statusMessage?: string;
+    receivedAt?: string;
   } | null>(null);
 
   const relationships = ["자녀", "배우자", "사위/며느리", "형제/자매", "부모", "손자/손녀", "기타 친인척"];
@@ -84,6 +86,17 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     // Submit to App state
     onRegisterSubmit(formData);
 
+    const now = new Date();
+    const formattedReceivedAt = now.toLocaleString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+
     // Open simulated/real Alimtalk alert notification modal
     setNotificationModal({
       isOpen: true,
@@ -92,6 +105,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       caregiverName: dataToSubmit.caregiverName,
       patientName: dataToSubmit.patientName,
       isSending: true,
+      receivedAt: formattedReceivedAt,
     });
 
     // Reset Form
@@ -154,7 +168,22 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
   };
 
   return (
-    <section id="registration" className="py-12 px-4 max-w-6xl mx-auto scroll-mt-20">
+    <section id="registration" className="py-8 px-4 max-w-6xl mx-auto scroll-mt-20">
+      {onBack && (
+        <div className="flex items-center justify-between mb-8 print:hidden">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-[#1e3a8a] border border-blue-100 font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            메인 화면으로
+          </button>
+
+          <span className="text-xs font-black tracking-widest text-[#1e3a8a] bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+            가족간병 즉시신청
+          </span>
+        </div>
+      )}
       
       {/* SECTION TITLE */}
       <div className="text-center mb-6">
@@ -249,29 +278,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
               <p className="text-[10px] text-slate-500 mt-1 font-medium">※ 보험사 제출 및 가족관계 증빙에 필요한 필수 정보입니다.</p>
             </div>
 
-            {/* 3. 환자와의 관계 */}
-            <div>
-              <label className="block text-sm font-extrabold text-[#1e3a8a] mb-1.5">
-                환자와의 관계 <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="relationship"
-                  value={formData.relationship}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-white/70 border border-slate-300 text-xs md:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all shadow-sm appearance-none focus:bg-white"
-                >
-                  {relationships.map((rel) => (
-                    <option key={rel} value={rel}>
-                      {rel}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[#1e3a8a] font-extrabold">
-                  ▼
-                </div>
-              </div>
-            </div>
+
 
             {/* 4. 환자 성명 */}
             <div>
@@ -283,7 +290,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 name="patientName"
                 value={formData.patientName}
                 onChange={handleInputChange}
-                placeholder="예: 김순희"
+                placeholder="예: 홍길동"
                 className="w-full px-4 py-2.5 rounded-2xl bg-white/70 border border-slate-300 text-xs md:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all shadow-sm focus:bg-white"
                 required
               />
@@ -299,7 +306,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 name="guardianName"
                 value={formData.guardianName}
                 onChange={handleInputChange}
-                placeholder="예: 홍인수 (통상 간병비 청구 보호자)"
+                placeholder="예: 홍길동 (통상 간병비 청구 보호자)"
                 className="w-full px-4 py-2.5 rounded-2xl bg-white/70 border border-slate-300 text-xs md:text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all shadow-sm focus:bg-white"
                 required
               />
@@ -683,6 +690,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     <div className="pt-2 mt-2 border-t border-slate-200 space-y-1 text-[10px] text-slate-600 font-bold">
                       <p>• 간병인: {notificationModal.caregiverName} 님</p>
                       <p>• 환자명: {notificationModal.patientName} 님</p>
+                      <p className="text-blue-700 font-black">• 시스템 자동 접수일시: {notificationModal.receivedAt}</p>
                       <p>• 상태: 접수일 기준 등록 효력 실시간 발생</p>
                     </div>
                   </div>
