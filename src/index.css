@@ -41,7 +41,7 @@
     color: black !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 2.5cm 2cm !important; /* Standard office document margins */
+    padding: 1.2cm 1.5cm !important; /* Spacious but compact to fit single page */
     margin: 0 !important;
     page-break-after: avoid;
     page-break-before: avoid;

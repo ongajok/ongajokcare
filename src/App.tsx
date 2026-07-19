@@ -88,50 +88,50 @@ export default function App() {
       }
     }
     
+    const todayStr = new Date().toISOString().split("T")[0];
     if (!parsed || parsed.length === 0) {
       parsed = [
         {
           id: "reg-mock-1",
-          caregiverName: "온가족",
-          caregiverPhone: "010-0000-0000",
-          caregiverSsn: "751015-2******",
+          caregiverName: "홍길동",
+          caregiverPhone: "010-1234-5678",
+          caregiverSsn: "1980년 01월 01일 (또는 800101)",
           relationship: "자녀",
-          patientName: "석은영",
-          guardianName: "온가족",
-          guardianPhone: "010-0000-0000",
+          patientName: "홍길동",
+          guardianName: "홍길동 (통상 간병비 청구 보호자)",
+          guardianPhone: "010-1234-5678",
           insuranceCompany: "KB손해보험",
-          hospitalName: "서울대병원",
-          admissionDate: "2026-07-15",
+          hospitalName: "서울대학교병원",
+          admissionDate: todayStr,
           caregivingFee: "140,000원",
           createdAt: new Date().toISOString()
         }
       ];
     } else {
+      let isAnyModified = false;
       parsed = parsed.map((reg) => {
-        let updated = { ...reg };
-        let isModified = false;
-        if (updated.caregiverName === "석은영") {
-          updated.caregiverName = "온가족";
-          isModified = true;
+        if (reg.id === "reg-mock-1" || reg.patientName === "석은영" || reg.caregiverName === "온가족" || reg.guardianPhone === "010-8765-4321") {
+          isAnyModified = true;
+          return {
+            ...reg,
+            caregiverName: "홍길동",
+            caregiverPhone: "010-1234-5678",
+            caregiverSsn: "1980년 01월 01일 (또는 800101)",
+            relationship: "자녀",
+            patientName: "홍길동",
+            guardianName: "홍길동 (통상 간병비 청구 보호자)",
+            guardianPhone: "010-1234-5678",
+            insuranceCompany: "KB손해보험",
+            hospitalName: "서울대학교병원",
+            admissionDate: todayStr,
+            caregivingFee: "140,000원",
+          };
         }
-        if (updated.caregiverPhone === "010-8967-7839" || updated.caregiverPhone === "") {
-          updated.caregiverPhone = "010-0000-0000";
-          isModified = true;
-        }
-        if (updated.patientName === "홍길동") {
-          updated.patientName = "석은영";
-          isModified = true;
-        }
-        if (updated.guardianName === "홍길동") {
-          updated.guardianName = "온가족";
-          isModified = true;
-        }
-        if (updated.guardianPhone === "010-8967-7839" || updated.guardianPhone === "" || updated.guardianPhone === "010-0000-0000") {
-          updated.guardianPhone = "010-0000-0000";
-          isModified = true;
-        }
-        return updated;
+        return reg;
       });
+      if (isAnyModified) {
+        localStorage.setItem("ongajok_registrations", JSON.stringify(parsed));
+      }
     }
     return parsed;
   });
