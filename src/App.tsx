@@ -22,18 +22,6 @@ import CaregivingLog from "./components/CaregivingLog";
 const HERO_FAMILY_IMAGE = "https://i.postimg.cc/4x6hRz3m/gajogsajin.png";
 
 export default function App() {
-  // 3D/4D Interactive Mouse Tilt state
-  const [heroTilt, setHeroTilt] = useState({ x: 0, y: 0 });
-  const handleHeroMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5; // range: -0.5 to 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5; // range: -0.5 to 0.5
-    setHeroTilt({ x: x * 10, y: y * -10 }); // Tilt up to 10 degrees
-  };
-  const handleHeroMouseLeave = () => {
-    setHeroTilt({ x: 0, y: 0 });
-  };
-
   // View state: 'home' | 'contract' | 'log' | 'registration'
   const [currentView, setCurrentView] = useState<"home" | "contract" | "log" | "registration">("home");
 
@@ -438,171 +426,29 @@ export default function App() {
       {currentView === "home" && (
         <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 pb-12">
         <div 
-          onMouseMove={handleHeroMouseMove}
-          onMouseLeave={handleHeroMouseLeave}
-          style={{ perspective: "1000px" }}
-          className="relative rounded-3xl overflow-hidden shadow-[0_35px_70px_rgba(0,0,0,0.3),inset_0_2px_10px_rgba(255,255,255,0.15)] min-h-[540px] md:min-h-[580px] flex items-center justify-center border border-white/10 transition-all duration-500 cursor-pointer py-10 md:py-12"
+          className="relative rounded-3xl overflow-hidden shadow-[0_25px_50px_rgba(0,0,0,0.25)] min-h-[500px] md:min-h-[550px] flex items-center justify-center border border-white/10 py-10 md:py-12 bg-slate-950"
         >
           
-          {/* Multi-Layered 3D & 4D Cinematic Parallax Engine */}
+          {/* Elegant Static Background Image */}
           <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-            {/* Layer 1: Ambient Background Layer (Soft film-grain blur 20% intensity, slow cinematic 4D pan + mouse tilt) */}
-            <motion.img
+            <img
               src={HERO_FAMILY_IMAGE}
               alt="Cinematic Background Layer"
               referrerPolicy="no-referrer"
-              className="absolute inset-0 w-full h-full object-cover filter brightness-[0.72] contrast-[1.12] blur-[1px] scale-[1.20]"
-              animate={{
-                scale: [1.20, 1.28, 1.23, 1.30, 1.20],
-                x: [-20 + heroTilt.x * 2.0, 20 + heroTilt.x * 2.0, -10 + heroTilt.x * 2.0, 15 + heroTilt.x * 2.0, -20 + heroTilt.x * 2.0],
-                y: [12 + heroTilt.y * 2.0, -15 + heroTilt.y * 2.0, 10 + heroTilt.y * 2.0, -12 + heroTilt.y * 2.0, 12 + heroTilt.y * 2.0],
-                rotateX: heroTilt.y * 1.2,
-                rotateY: heroTilt.x * 1.2,
-              }}
-              transition={{
-                scale: {
-                  duration: 24,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                x: {
-                  duration: 24,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                y: {
-                  duration: 24,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                rotateX: { type: "spring", stiffness: 90, damping: 15 },
-                rotateY: { type: "spring", stiffness: 90, damping: 15 },
-              }}
+              className="absolute inset-0 w-full h-full object-cover filter brightness-[0.45] contrast-[1.05]"
             />
-
-            {/* Layer 2: Real-time 3D depth-separating foreground layer (Super sharp high-definition with ultra-subtle edge blur) */}
-            <motion.div
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{
-                clipPath: "circle(58% at 50% 50%)",
-              }}
-              animate={{
-                scale: [1.10, 1.16, 1.12, 1.18, 1.10],
-                x: [10 + heroTilt.x * 1.2, -10 + heroTilt.x * 1.2, 12 + heroTilt.x * 1.2, -8 + heroTilt.x * 1.2, 10 + heroTilt.x * 1.2],
-                y: [-8 + heroTilt.y * 1.2, 10 + heroTilt.y * 1.2, -10 + heroTilt.y * 1.2, 8 + heroTilt.y * 1.2, -8 + heroTilt.y * 1.2],
-                rotateX: heroTilt.y * 0.9,
-                rotateY: heroTilt.x * 0.9,
-              }}
-              transition={{
-                scale: {
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                x: {
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                y: {
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                rotateX: { type: "spring", stiffness: 95, damping: 18 },
-                rotateY: { type: "spring", stiffness: 95, damping: 18 },
-              }}
-            >
-              <img
-                src={HERO_FAMILY_IMAGE}
-                alt="High-Res Focus Layer"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover filter brightness-[0.84] contrast-[1.10] blur-[0.8px]"
-              />
-            </motion.div>
-
-            {/* Layer 3: Warm Environmental Glow & Moving Volumetric Light Ray */}
-            <motion.div 
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(251,191,36,0.22),transparent_65%)] pointer-events-none mix-blend-screen"
-              animate={{
-                opacity: [0.5, 0.9, 0.6, 1.0, 0.5],
-                scale: [1.0, 1.15, 1.05, 1.2, 1.0],
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-
-            {/* Moving Sunbeam / Real-time Lens Flare */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-tr from-transparent via-amber-200/15 to-transparent pointer-events-none mix-blend-color-dodge"
-              animate={{
-                opacity: [0.3, 0.75, 0.3],
-                x: ['-35%', '35%', '-35%'],
-                y: ['-15%', '15%', '-15%'],
-              }}
-              transition={{
-                duration: 16,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-
-            {/* Simulated 4D Shadow Swaying Overlay (Creates separate dynamic lighting across subjects) */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-slate-950/30 pointer-events-none mix-blend-multiply"
-              animate={{
-                opacity: [0.2, 0.5, 0.2],
-                x: [-20, 20, -20],
-              }}
-              transition={{
-                duration: 9,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-
-            {/* Floating Cinematic Bokeh Particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
-              {[...Array(16)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute rounded-full bg-amber-200/20 mix-blend-screen filter blur-[2.5px]"
-                  style={{
-                    width: Math.random() * 9 + 4,
-                    height: Math.random() * 9 + 4,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                  }}
-                  animate={{
-                    y: [0, -90, 0],
-                    x: [0, Math.random() * 50 - 25, 0],
-                    scale: [1, Math.random() * 1.8 + 0.6, 1],
-                    opacity: [Math.random() * 0.15 + 0.1, Math.random() * 0.7 + 0.2, Math.random() * 0.15 + 0.1],
-                  }}
-                  transition={{
-                    duration: Math.random() * 12 + 12,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: Math.random() * -12,
-                  }}
-                />
-              ))}
-            </div>
           </div>
 
           {/* Premium dark & warm transparent gradients for maximum text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-slate-950/20 z-[2]" />
-          <div className="absolute inset-0 bg-amber-900/10 pointer-events-none z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent z-[2]" />
+          <div className="absolute inset-0 bg-amber-950/5 pointer-events-none z-[2]" />
 
           {/* Slogan and details centered/bottomed on banner */}
           <div className="absolute bottom-6 left-6 right-6 md:left-12 md:right-12 text-center md:text-left z-10 space-y-3">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
               className="inline-block"
             >
               <span className="text-[10px] font-black tracking-widest text-amber-300 bg-amber-950/60 backdrop-blur-md px-3 py-1 rounded-full border border-amber-500/20 uppercase shadow-sm">

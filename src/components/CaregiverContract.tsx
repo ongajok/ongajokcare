@@ -196,14 +196,16 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
     const rect = canvas.getBoundingClientRect();
     if ("touches" in e) {
       if (e.touches.length === 0) return { x: 0, y: 0 };
+      const clientX = e.touches[0].clientX;
+      const clientY = e.touches[0].clientY;
       return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
+        x: ((clientX - rect.left) / rect.width) * canvas.width,
+        y: ((clientY - rect.top) / rect.height) * canvas.height,
       };
     } else {
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: ((e.clientX - rect.left) / rect.width) * canvas.width,
+        y: ((e.clientY - rect.top) / rect.height) * canvas.height,
       };
     }
   };
@@ -835,13 +837,13 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                     </div>
 
                     {/* Interactive Electronic Signature pad */}
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-28 relative bg-slate-50/50 print:border-solid">
+                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-44 md:h-36 relative bg-slate-50/50 print:border-solid">
                       <div className="flex items-center justify-between text-[10px]">
                         <span className="font-black text-[#1e3a8a] block">구인자 서명 또는 날인</span>
                         {!isSigned && (
                           <span className="text-[9px] font-bold text-amber-600 flex items-center gap-0.5 print:hidden">
                             <PenTool className="w-2.5 h-2.5" />
-                            서명 필요
+                            여기에 서명해 주세요 (마우스/터치 가능)
                           </span>
                         )}
                       </div>
@@ -852,8 +854,8 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                           <>
                             <canvas
                               ref={canvasRef}
-                              width={250}
-                              height={55}
+                              width={500}
+                              height={150}
                               onMouseDown={startDrawing}
                               onMouseMove={draw}
                               onMouseUp={stopDrawing}
@@ -861,21 +863,22 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                               onTouchStart={startDrawing}
                               onTouchMove={draw}
                               onTouchEnd={stopDrawing}
-                              className="w-full h-full cursor-crosshair"
+                              style={{ touchAction: "none" }}
+                              className="w-full h-full cursor-crosshair bg-white"
                             />
                             {/* Signature Actions */}
-                            <div className="absolute right-1 bottom-1 flex gap-1 print:hidden z-10">
+                            <div className="absolute right-1.5 bottom-1.5 flex gap-1 print:hidden z-10">
                               <button
                                 type="button"
                                 onClick={clearCanvas}
-                                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-[8px] text-slate-500 font-bold rounded"
+                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-[9px] text-slate-500 font-bold rounded shadow-sm cursor-pointer"
                               >
                                 지우기
                               </button>
                               <button
                                 type="button"
                                 onClick={saveSignature}
-                                className="px-1.5 py-0.5 bg-[#1e3a8a] hover:bg-blue-800 text-[8px] text-white font-bold rounded"
+                                className="px-2 py-1 bg-[#1e3a8a] hover:bg-blue-800 text-[9px] text-white font-bold rounded shadow-sm cursor-pointer"
                               >
                                 저장
                               </button>

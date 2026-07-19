@@ -172,14 +172,16 @@ export default function CaregivingLog({ onBack, phone }: CaregivingLogProps) {
     const rect = canvas.getBoundingClientRect();
     if ("touches" in e) {
       if (e.touches.length === 0) return { x: 0, y: 0 };
+      const clientX = e.touches[0].clientX;
+      const clientY = e.touches[0].clientY;
       return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
+        x: ((clientX - rect.left) / rect.width) * canvas.width,
+        y: ((clientY - rect.top) / rect.height) * canvas.height,
       };
     } else {
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: ((e.clientX - rect.left) / rect.width) * canvas.width,
+        y: ((e.clientY - rect.top) / rect.height) * canvas.height,
       };
     }
   };
@@ -676,53 +678,54 @@ export default function CaregivingLog({ onBack, phone }: CaregivingLogProps) {
                   </div>
 
                   <div className="flex justify-end gap-4 pt-4">
-                    {/* Caregiver Sign block */}
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-28 w-64 relative bg-slate-50/50 print:border-solid">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="font-black text-emerald-600 block">간병 제공자 (을) 서명</span>
-                        {!isSigned && (
-                          <span className="text-[9px] font-bold text-amber-600 flex items-center gap-0.5 print:hidden">
-                            <PenTool className="w-2.5 h-2.5" />
-                            서명 필요
-                          </span>
-                        )}
-                      </div>
+                     {/* Caregiver Sign block */}
+                     <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-44 md:h-36 w-full sm:w-80 md:w-96 relative bg-slate-50/50 print:border-solid">
+                       <div className="flex items-center justify-between text-[10px]">
+                         <span className="font-black text-emerald-600 block">간병 제공자 (을) 서명</span>
+                         {!isSigned && (
+                           <span className="text-[9px] font-bold text-amber-600 flex items-center gap-0.5 print:hidden">
+                             <PenTool className="w-2.5 h-2.5" />
+                             여기에 서명해 주세요 (마우스/터치 가능)
+                           </span>
+                         )}
+                       </div>
 
-                      {/* Canvas Wrapper */}
-                      <div className="relative flex-1 bg-white border border-slate-100 rounded-lg mt-1.5 overflow-hidden">
-                        {!isSigned ? (
-                          <>
-                            <canvas
-                              ref={canvasRef}
-                              width={240}
-                              height={55}
-                              onMouseDown={startDrawing}
-                              onMouseMove={draw}
-                              onMouseUp={stopDrawing}
-                              onMouseLeave={stopDrawing}
-                              onTouchStart={startDrawing}
-                              onTouchMove={draw}
-                              onTouchEnd={stopDrawing}
-                              className="w-full h-full cursor-crosshair"
-                            />
-                            {/* Signature Actions */}
-                            <div className="absolute right-1 bottom-1 flex gap-1 print:hidden z-10">
-                              <button
-                                type="button"
-                                onClick={clearCanvas}
-                                className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-[8px] text-slate-500 font-bold rounded cursor-pointer"
-                              >
-                                지우기
-                              </button>
-                              <button
-                                type="button"
-                                onClick={saveSignature}
-                                className="px-1.5 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-[8px] text-white font-bold rounded cursor-pointer"
-                              >
-                                저장
-                              </button>
-                            </div>
-                          </>
+                       {/* Canvas Wrapper */}
+                       <div className="relative flex-1 bg-white border border-slate-100 rounded-lg mt-1.5 overflow-hidden">
+                         {!isSigned ? (
+                           <>
+                             <canvas
+                               ref={canvasRef}
+                               width={500}
+                               height={150}
+                               onMouseDown={startDrawing}
+                               onMouseMove={draw}
+                               onMouseUp={stopDrawing}
+                               onMouseLeave={stopDrawing}
+                               onTouchStart={startDrawing}
+                               onTouchMove={draw}
+                               onTouchEnd={stopDrawing}
+                               style={{ touchAction: "none" }}
+                               className="w-full h-full cursor-crosshair bg-white"
+                             />
+                             {/* Signature Actions */}
+                             <div className="absolute right-1.5 bottom-1.5 flex gap-1 print:hidden z-10">
+                               <button
+                                 type="button"
+                                 onClick={clearCanvas}
+                                 className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-[9px] text-slate-500 font-bold rounded cursor-pointer shadow-sm"
+                               >
+                                 지우기
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={saveSignature}
+                                 className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-[9px] text-white font-bold rounded cursor-pointer shadow-sm"
+                               >
+                                 저장
+                               </button>
+                             </div>
+                           </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center relative">
                             {signatureData && (
