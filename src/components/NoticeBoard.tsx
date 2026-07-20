@@ -13,6 +13,7 @@ interface NoticeBoardProps {
   onOpenIntro?: () => void;
   onGoToRegistration?: () => void;
   onGoToCaregivingLog?: () => void;
+  isAccordionMode?: boolean;
 }
 
 export default function NoticeBoard({ 
@@ -23,7 +24,8 @@ export default function NoticeBoard({
   onDeleteNotice,
   onOpenIntro,
   onGoToRegistration,
-  onGoToCaregivingLog
+  onGoToCaregivingLog,
+  isAccordionMode = false
 }: NoticeBoardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>("notice-1");
@@ -61,33 +63,37 @@ export default function NoticeBoard({
   };
 
   return (
-    <section id="notices" className="py-12 px-4 max-w-6xl mx-auto scroll-mt-20">
+    <section id="notices" className={isAccordionMode ? "px-2 py-2 max-w-4xl mx-auto" : "py-12 px-4 max-w-6xl mx-auto scroll-mt-20"}>
       
       {/* SECTION TITLE */}
-      <div className="text-center mb-10">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 100 }}
-          className="inline-block"
-        >
-          <span className="text-[11px] font-bold tracking-widest text-[#f43f5e] bg-rose-100 px-3 py-1 rounded-full uppercase shadow-sm">
-            NOTICE BOARD
-          </span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-[#1e3a8a] mt-2 tracking-tight whitespace-nowrap">
-            알림 및 소식 게시판
-          </h2>
-        </motion.div>
-      </div>
+      {!isAccordionMode && (
+        <div className="text-center mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 100 }}
+            className="inline-block"
+          >
+            <span className="text-[11px] font-bold tracking-widest text-[#f43f5e] bg-rose-100 px-3 py-1 rounded-full uppercase shadow-sm">
+              NOTICE BOARD
+            </span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#1e3a8a] mt-2 tracking-tight whitespace-nowrap">
+              알림 및 소식 게시판
+            </h2>
+          </motion.div>
+        </div>
+      )}
 
       {/* Mascot On-i speech bubble */}
-      <div className="mb-8 max-w-3xl mx-auto">
-        <MascotOni text={config.oniNoticeText} pose="smile" />
-      </div>
+      {!isAccordionMode && (
+        <div className="mb-8 max-w-3xl mx-auto">
+          <MascotOni text={config.oniNoticeText} pose="smile" />
+        </div>
+      )}
 
       {/* Notice Board Container (Single column layout) */}
-      <div className="max-w-4xl mx-auto bg-white/70 backdrop-blur-xl border border-white/50 rounded-[24px] p-6 md:p-8 shadow-xl flex flex-col gap-6 text-[#1a1a1a]">
+      <div className={isAccordionMode ? "max-w-4xl mx-auto bg-transparent p-2 flex flex-col gap-6 text-[#1a1a1a]" : "max-w-4xl mx-auto bg-white/70 backdrop-blur-xl border border-white/50 rounded-[24px] p-6 md:p-8 shadow-xl flex flex-col gap-6 text-[#1a1a1a]"}>
         
         {/* Top Search bar & Admin Control */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -299,19 +305,7 @@ export default function NoticeBoard({
                           </div>
                         )}
 
-                        {(notice.title.includes("작성일지 작성법") || 
-                          notice.title.includes("간병일지 작성법")) && (
-                          <div className="mt-4 flex">
-                            <button
-                              type="button"
-                              onClick={onGoToCaregivingLog}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-indigo-700 animate-bounce"
-                            >
-                              <span>📋</span>
-                              <span>간병일지 작성</span>
-                            </button>
-                          </div>
-                        )}
+                        {/* 간병일지 작성 버튼 삭제 요청에 따른 처리 */}
                         <div className="mt-4 pt-3 border-t border-dashed border-slate-200/60 flex items-center justify-between text-[10px] text-slate-400 font-bold">
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-slate-400" />

@@ -146,6 +146,7 @@ export default function App() {
   const [isIntroExpanded, setIsIntroExpanded] = useState(false);
   const [isProcessExpanded, setIsProcessExpanded] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
 
   // Sync to LocalStorage & Hash Routing
   useEffect(() => {
@@ -290,38 +291,25 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-md border-b border-white/30 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           
-          {/* Logo Brand with elegant split 2-line text */}
+          {/* Logo Brand with elegant uniform text */}
           <div className="flex items-center gap-2 cursor-pointer group select-none" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <CompanyLogo size={44} />
-            <div className="flex flex-col leading-tight">
-              <span className="text-[10px] md:text-xs font-bold tracking-widest text-slate-500 group-hover:text-slate-700 transition-colors">온가족</span>
-              <span className="text-xs md:text-sm lg:text-base font-black tracking-tighter text-[#1e3a8a]">간병협회</span>
-            </div>
+            <CompanyLogo size={40} />
+            <span className="text-sm md:text-base font-black tracking-tight text-[#1e3a8a] whitespace-nowrap">
+              온가족 간병협회
+            </span>
           </div>
 
-          {/* Desktop Navigation links - split into elegant 2-line layout */}
-          <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-slate-700">
+          {/* Desktop Navigation links - uniform font size and layout */}
+          <nav className="hidden md:flex items-center gap-5 lg:gap-6">
             <button
               onClick={() => {
                 setCurrentView("home");
                 setIsIntroExpanded(true);
                 setTimeout(() => handleScrollToSection("accordion-introduction"), 100);
               }}
-              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
-              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">협회</span>
-              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">소개</span>
-            </button>
-            <button
-              onClick={() => {
-                setCurrentView("home");
-                setIsProcessExpanded(true);
-                setTimeout(() => handleScrollToSection("accordion-process"), 100);
-              }}
-              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
-            >
-              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">간병</span>
-              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">신청절차</span>
+              협회소개
             </button>
             <button
               onClick={() => {
@@ -329,30 +317,29 @@ export default function App() {
                 setIsMapExpanded(true);
                 setTimeout(() => handleScrollToSection("accordion-map"), 100);
               }}
-              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
-              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">오시는</span>
-              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">길</span>
+              오시는길
             </button>
             <button
               onClick={() => {
                 setCurrentView("registration");
                 window.scrollTo(0, 0);
               }}
-              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+              className="text-xs md:text-sm font-extrabold text-[#e11d48] hover:text-[#be123c] transition-colors cursor-pointer"
+              style={{ color: '#e11d48' }}
             >
-              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">가족간병</span>
-              <span className="text-xs lg:text-sm font-black text-[#e11d48] group-hover:text-[#be123c] transition-colors">즉시신청</span>
+              가족간병 즉시신청
             </button>
             <button
               onClick={() => {
                 setCurrentView("home");
-                handleScrollToSection("notices");
+                setIsNoticeExpanded(true);
+                setTimeout(() => handleScrollToSection("accordion-notices"), 100);
               }}
-              className="group hover:scale-105 transition-all cursor-pointer flex flex-col items-center leading-tight text-center px-1"
+              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
-              <span className="text-[10px] lg:text-xs font-semibold text-slate-500 group-hover:text-slate-800 transition-colors">게시</span>
-              <span className="text-xs lg:text-sm font-black text-slate-800 group-hover:text-[#1e3a8a] transition-colors">판</span>
+              게시판
             </button>
           </nav>
 
@@ -481,73 +468,52 @@ export default function App() {
               transition={{ delay: 0.5 }}
               className="pt-2.5 space-y-3 w-full max-w-xl mx-auto md:mx-0"
             >
-              {/* Row 1: Full-width Button Card - Shining 3D Bright Gold */}
+              {/* Row 1: Full-width Button Card - Glowing Premium Navy */}
               <button
                 onClick={() => {
                   setCurrentView("registration");
                   window.scrollTo(0, 0);
                 }}
-                className="w-full text-left p-4 bg-gradient-to-r from-[#fef08a] via-[#facc15] to-[#eab308] text-amber-950 rounded-2xl shadow-[0_12px_28px_rgba(234,179,8,0.4),0_0_15px_rgba(254,240,138,0.25)] border-b-4 border-[#a16207] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/45 flex items-center justify-between"
+                className="w-full text-left p-4 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white rounded-2xl shadow-[0_12px_28px_rgba(30,58,138,0.4),0_0_15px_rgba(59,130,246,0.25)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/20 flex items-center justify-between"
               >
                 {/* Shimmer overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+                
+                <div className="flex items-center gap-3 z-10">
+                  <div className="p-2 bg-white/15 text-white rounded-xl">
+                    <Edit3 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs md:text-sm font-black tracking-tight text-white">가족간병 즉시신청</h3>
+                    <p className="text-[10px] text-blue-100 font-bold">협회 표준 시스템에 가족간병 등록 신청서를 제출합니다.</p>
+                  </div>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-x-1 transition-transform z-10">
+                  <span className="text-xs font-black text-white">→</span>
+                </div>
+              </button>
+
+              {/* Row 2: KakaoTalk 1:1 Consultation Button - Darker Soft Light Yellow */}
+              <button
+                onClick={handleKakaoConsultation}
+                className="w-full text-left p-4 bg-gradient-to-r from-[#b5942b] via-[#d4b24c] to-[#ebd27c] text-amber-950 rounded-2xl shadow-[0_12px_24px_rgba(181,148,43,0.3),0_0_15px_rgba(235,210,124,0.15)] border-b-4 border-[#7a5a04] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/20 flex items-center justify-between"
+              >
+                {/* Shimmer overlay */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                 
                 <div className="flex items-center gap-3 z-10">
                   <div className="p-2 bg-amber-950/10 rounded-xl">
-                    <Edit3 className="w-5 h-5 text-amber-950" />
+                    <MessageSquare className="w-5 h-5 text-amber-950" />
                   </div>
                   <div>
-                    <h3 className="text-xs md:text-sm font-black tracking-tight text-amber-950">가족간병 즉시신청</h3>
-                    <p className="text-[10px] text-amber-900 font-bold">협회 표준 시스템에 가족간병 등록 신청서를 제출합니다.</p>
+                    <h3 className="text-xs md:text-sm font-black tracking-tight text-amber-950">카카오톡 1:1 상담</h3>
+                    <p className="text-[10px] text-amber-900 font-bold">실시간 간병 관련 고민 상담 및 정식 등록을 도와드립니다.</p>
                   </div>
                 </div>
                 <div className="w-7 h-7 rounded-full bg-amber-950/10 flex items-center justify-center group-hover:translate-x-1 transition-transform z-10">
                   <span className="text-xs font-black text-amber-950">→</span>
                 </div>
               </button>
-
-              {/* Row 2: Left/Right Split Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Left Button Card: Caregiver Contract - Shining 3D Navy */}
-                <button
-                  onClick={() => setCurrentView("contract")}
-                  className="text-left p-4 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white rounded-2xl shadow-[0_12px_24px_rgba(30,58,138,0.35),0_0_15px_rgba(59,130,246,0.25)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer border-t border-white/20 flex flex-col justify-between h-[90px] relative overflow-hidden group"
-                >
-                  {/* Shimmer overlay */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-
-                  <div className="flex items-center gap-2 z-10">
-                    <div className="p-1.5 bg-white/15 text-white rounded-lg">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-black tracking-tight text-white">간병인 알선 및 중개 계약서</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between w-full z-10">
-                    <span className="text-[9px] text-blue-100 font-bold">계약서 조항 작성 및 날인</span>
-                    <span className="text-xs font-black text-white group-hover:translate-x-1 transition-transform">작성 →</span>
-                  </div>
-                </button>
-
-                {/* Right Button Card: Caregiving Log - Shining 3D Ivory */}
-                <button
-                  onClick={() => setCurrentView("log")}
-                  className="text-left p-4 bg-gradient-to-r from-[#fafaf6] via-[#f4f2ea] to-[#e8e4d9] text-slate-800 rounded-2xl shadow-[0_12px_24px_rgba(0,0,0,0.08),0_0_15px_rgba(255,255,255,0.8)] border-b-4 border-[#b5af9e] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer border-t border-white flex flex-col justify-between h-[90px] relative overflow-hidden group"
-                >
-                  {/* Shimmer overlay */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-
-                  <div className="flex items-center gap-2 z-10">
-                    <div className="p-1.5 bg-amber-900/10 text-amber-950 rounded-lg">
-                      <ClipboardList className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-black tracking-tight text-slate-800">간병일지 작성</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between w-full z-10">
-                    <span className="text-[9px] text-slate-500 font-bold">일일 환자 돌봄 현황 기록</span>
-                    <span className="text-xs font-black text-[#1e3a8a] group-hover:translate-x-1 transition-transform">기록 →</span>
-                  </div>
-                </button>
-              </div>
             </motion.div>
           </div>
 
@@ -723,33 +689,70 @@ export default function App() {
                 </AnimatePresence>
               </div>
 
-            </div>
+              {/* Accordion 4: 알림 및 소식 게시판 */}
+              <div id="accordion-notices" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+                <button
+                  onClick={() => setIsNoticeExpanded(!isNoticeExpanded)}
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-2xl border border-blue-100 shadow-inner flex-shrink-0">
+                      <MessageSquare className="w-6 h-6 text-[#1e3a8a]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black text-[#1e3a8a]">알림 및 소식 게시판</h3>
+                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">협회 주요 공지사항 및 유용한 요양 정보 안내</p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isNoticeExpanded ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="p-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </motion.div>
+                </button>
+                
+                <AnimatePresence initial={false}>
+                  {isNoticeExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-slate-200/50 bg-white/10 p-4 md:p-6">
+                        <NoticeBoard
+                          config={config}
+                          notices={notices}
+                          isAdmin={isAdminMode}
+                          onAddNotice={handleAddNotice}
+                          onDeleteNotice={handleDeleteNotice}
+                          isAccordionMode={true}
+                          onOpenIntro={() => {
+                            setIsIntroExpanded(true);
+                            setTimeout(() => {
+                              const el = document.getElementById("accordion-introduction");
+                              if (el) el.scrollIntoView({ behavior: "smooth" });
+                            }, 100);
+                          }}
+                          onGoToRegistration={() => {
+                            setCurrentView("registration");
+                            window.scrollTo(0, 0);
+                          }}
+                          onGoToCaregivingLog={() => {
+                            setCurrentView("log");
+                            window.scrollTo(0, 0);
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-            {/* ========================================================= */}
-            {/* NOTICE & NEWS BOARD (알림 및 소식 게시판) */}
-            {/* ========================================================= */}
-            <NoticeBoard
-              config={config}
-              notices={notices}
-              isAdmin={isAdminMode}
-              onAddNotice={handleAddNotice}
-              onDeleteNotice={handleDeleteNotice}
-              onOpenIntro={() => {
-                setIsIntroExpanded(true);
-                setTimeout(() => {
-                  const el = document.getElementById("accordion-introduction");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
-                }, 100);
-              }}
-              onGoToRegistration={() => {
-                setCurrentView("registration");
-                window.scrollTo(0, 0);
-              }}
-              onGoToCaregivingLog={() => {
-                setCurrentView("log");
-                window.scrollTo(0, 0);
-              }}
-            />
+            </div>
           </motion.div>
         ) : currentView === "contract" ? (
           <motion.div

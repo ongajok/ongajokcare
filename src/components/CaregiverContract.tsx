@@ -616,7 +616,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
               </div>
 
               {/* The Contract Paper Content */}
-              <div id="printable-contract" className="p-5 md:p-8 space-y-4 print:p-0 print:space-y-3 text-[#1a1a1a] font-sans bg-amber-50/10 min-h-[842px] relative">
+              <div id="printable-contract" className="p-8 md:p-12 space-y-6 text-[#1a1a1a] font-sans bg-amber-50/10 min-h-[842px] relative">
                 {/* Watermark in background */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
                   <span className="text-6xl font-black tracking-widest border-8 border-dashed border-[#1e3a8a] p-8 rounded-3xl text-[#1e3a8a] rotate-12">
@@ -639,9 +639,9 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                 </p>
 
                 {/* Section 1: Parties Info */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <h4 className="text-xs font-black text-[#1e3a8a]">당사자의 인적사항 및 근무 대상</h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <table className="w-full text-[10px] border border-slate-200 border-collapse">
                       <tbody>
                         <tr className="bg-slate-50 border-b border-slate-200">
@@ -662,7 +662,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                         </tr>
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-1.5 text-left font-bold text-slate-600 border-r border-slate-200">지불 및 정산방식</th>
-                          <td className="px-2 py-1.5 text-[9px] text-slate-500">직접 이체 (최종 종료시)</td>
+                          <td className="px-2 py-1.5 text-xs text-slate-500">직접 이체 (최종 종료시)</td>
                         </tr>
                       </tbody>
                     </table>
@@ -683,7 +683,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                         </tr>
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-1.5 text-left font-bold text-slate-600 border-r border-slate-200">근무장소(병원명)</th>
-                          <td className="px-2 py-1.5 text-[9px] text-slate-500">{formData.location || "          "}</td>
+                          <td className="px-2 py-1.5 text-xs text-slate-500">{formData.location || "          "}</td>
                         </tr>
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-1.5 text-left font-bold text-slate-600 border-r border-slate-200">간병 시작일</th>
@@ -773,8 +773,8 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                 </div>
 
                 {/* Section 3: Standard terms */}
-                <div className="space-y-1 text-[8px] sm:text-[8.5px] text-slate-500 leading-tight text-justify">
-                  <h4 className="text-[10px] font-black text-[#1e3a8a] text-slate-800 border-l-2 border-[#1e3a8a] pl-1.5">간병인 알선 및 중개 계약서 약정 조항</h4>
+                <div className="space-y-2.5 text-[9px] text-slate-500 leading-relaxed text-justify">
+                  <h4 className="text-xs font-black text-[#1e3a8a] text-slate-800 border-l-2 border-[#1e3a8a] pl-1.5">간병인 알선 및 중개 계약서 약정 조항</h4>
                   
                   <p>
                     <strong>제1조 (목적 및 성격)</strong><br />
@@ -801,24 +801,24 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                     본 서비스의 제공자는 근로기준법상 가사사용인로서, 당사자 간의 구체적인 업무 내용과 근무 조건은 별도의 서면 합의서(간병 서비스 약정서)에 따른다. 중개 수수료 및 서비스 비용 정산은 「직업안정법」 및 관련 세무 법령을 준수한다.
                   </p>
 
-                  <p className="font-bold text-[#1e3a8a] text-[8.5px] py-0.5">
+                  <p className="font-bold text-[#1e3a8a] text-[9.5px] py-1">
                     본인은 위 내용을 충분히 숙지하였으며, 온가족간병협회의 중개 알선 서비스 이용에 동의합니다.
                   </p>
 
                   {formData.specialTerms && (
-                    <p className="bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                    <p className="bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <strong>제6조 (특약 사항)</strong> {formData.specialTerms}
                     </p>
                   )}
                 </div>
 
                 {/* Sign and Seal Footer */}
-                <div className="pt-2 border-t border-slate-200 space-y-2">
+                <div className="pt-4 border-t border-slate-200 space-y-4">
                   <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
                     <span>계약 체결일: {new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="grid grid-cols-2 gap-4 pt-4">
                     {/* Association Stamp */}
                     <div className="border border-slate-200 rounded-xl p-3 flex flex-col justify-between h-28 relative overflow-hidden bg-slate-50/50">
                       <div className="space-y-0.5">
@@ -839,7 +839,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                     </div>
 
                     {/* Interactive Electronic Signature pad */}
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-44 md:h-36 print:h-28 relative bg-slate-50/50 print:border-solid">
+                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col justify-between h-44 md:h-36 relative bg-slate-50/50 print:border-solid">
                       <div className="flex items-center justify-between text-[10px]">
                         <span className="font-black text-[#1e3a8a] block">구인자 서명 또는 날인</span>
                         {!isSigned && (
