@@ -50,25 +50,23 @@ export default function App() {
       try {
         const parsed: NoticePost[] = JSON.parse(saved);
         return parsed.map(notice => {
-          if (notice.id === "notice-5" || notice.title.includes("등록은 언제")) {
-            return {
-              ...notice,
-              content: "대부분의 보험 📋 약관상 실제 간병이 시작되기 전에 협회에 등록이 완료되어야 정상적인 청구 및 심사가 가능합니다. 퇴원 후에 소급하여 등록하는 것은 심사상 불인정되거나 매우 어려울 수 있으니, 입원 즉시 등록해 주세요!\n\n궁금하신 부분은 언제든 협회 고객센터(010-9520-7839)로 문의해 주시기 바랍니다.\n\n지금 바로 간병인을 등록하시려면 하단의 👉 [가족간병 즉시신청] 버튼을 누르시거나 카카오톡 상담을 이용해 주세요."
-            };
+          const updatedNotice = { ...notice };
+          if (updatedNotice.date === "2026-07-16") {
+            updatedNotice.date = "2026-07-20";
+          }
+          if (updatedNotice.id === "notice-5" || updatedNotice.title.includes("등록은 언제")) {
+            updatedNotice.content = "대부분의 보험 📋 약관상 실제 간병이 시작되기 전에 협회에 등록이 완료되어야 정상적인 청구 및 심사가 가능합니다. 퇴원 후에 소급하여 등록하는 것은 심사상 불인정되거나 매우 어려울 수 있으니, 입원 즉시 등록해 주세요!\n\n궁금하신 부분은 언제든 협회 고객센터(010-9520-7839)로 문의해 주시기 바랍니다.\n\n지금 바로 간병인을 등록하시려면 하단의 👉 [가족간병 즉시신청] 버튼을 누르시거나 카카오톡 상담을 이용해 주세요.";
           }
           if (
-            notice.id === "notice-3" || 
-            notice.title.includes("간병과 비용") || 
-            notice.title.includes("알선 중개수수료") || 
-            notice.title.includes("비용은 어떻게")
+            updatedNotice.id === "notice-3" || 
+            updatedNotice.title.includes("간병과 비용") || 
+            updatedNotice.title.includes("알선 중개수수료") || 
+            updatedNotice.title.includes("비용은 어떻게")
           ) {
-            return {
-              ...notice,
-              title: "비용은 어떻게 적용되나요?",
-              content: "1일 기준 4,000원의 합리적인 행정 수수료로 소중한 가족의 건강과 행복을 온 마음으로 응원하겠습니다."
-            };
+            updatedNotice.title = "비용은 어떻게 적용되나요?";
+            updatedNotice.content = "1일 기준 4,000원의 합리적인 행정 수수료로 소중한 가족의 건강과 행복을 온 마음으로 응원하겠습니다.";
           }
-          return notice;
+          return updatedNotice;
         });
       } catch (e) {
         return INITIAL_NOTICES;

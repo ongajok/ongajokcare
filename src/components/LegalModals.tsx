@@ -111,7 +111,7 @@ const TermsOfService: React.FC = () => {
     <div className="space-y-4">
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
         <p className="text-[#1e3a8a] font-black text-sm">온가족간병협회 서비스 이용약관</p>
-        <p className="text-slate-500 text-[10px]">최초 공포 및 적용 시행일: 2026년 7월 16일</p>
+        <p className="text-slate-500 text-[10px]">최초 공포 및 적용 시행일: 2026년 7월 20일</p>
         <p className="text-slate-500 text-[10px]">
           직업안정법 제19조(유료직업소개사업)에 따른 정식 신고기관: 제2026-3100300-14-5-00009호
         </p>
@@ -176,7 +176,7 @@ const PrivacyPolicy: React.FC = () => {
     <div className="space-y-4">
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
         <p className="text-[#1e3a8a] font-black text-sm">온가족간병협회 개인정보 처리방침</p>
-        <p className="text-slate-500 text-[10px]">최초 제정 및 적용 시행일: 2026년 7월 16일</p>
+        <p className="text-slate-500 text-[10px]">최초 제정 및 적용 시행일: 2026년 7월 20일</p>
         <p className="text-slate-500 text-[10px]">
           개인정보보호법 제15조 및 제22조에 입각한 정부 공인 표준 개인정보보호 수집 기준 준수
         </p>
@@ -243,7 +243,7 @@ const CommunityRules: React.FC = () => {
     <div className="space-y-4">
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
         <p className="text-[#1e3a8a] font-black text-sm">온가족간병협회 커뮤니티 및 게시판 이용규칙</p>
-        <p className="text-slate-500 text-[10px]">최초 제정 및 적용 시행일: 2026년 7월 16일</p>
+        <p className="text-slate-500 text-[10px]">최초 제정 및 적용 시행일: 2026년 7월 20일</p>
         <p className="text-slate-500 text-[10px]">
           정보통신망 이용촉진 및 정보보호 등에 관한 법률 제44조의2(정보의 삭제요청 등) 준수
         </p>

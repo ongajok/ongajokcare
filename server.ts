@@ -32,6 +32,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper function to safely get environment variable with non-empty fallback
+function getEnvVal(key: string, fallback: string): string {
+  const val = process.env[key];
+  if (!val || val.trim() === "" || val === "undefined" || val === "null") {
+    return fallback;
+  }
+  return val.trim();
+}
+
+// Health check endpoint (placed early to guarantee immediate 200 OK)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "온가족간병협회 API 서버가 정상 작동 중입니다.",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "development"
+  });
+});
+
 // Debug route to safely verify environment variables on the running server
 app.get("/api/debug-env", (req, res) => {
   const envKeys = Object.keys(process.env);
@@ -145,11 +164,11 @@ app.post("/api/send-alimtalk", async (req, res) => {
     const msg = msgUJ6650Full;
 
     // Credentials
-    let apiKey = process.env.ALIGO_API_KEY || "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
-    let userId = process.env.ALIGO_USER_ID || "ongajok1090";
-    let senderKey = process.env.ALIGO_SENDER_KEY || "90393b608b562a491a73e74e7e5331b8b41ba0e0";
-    let senderPhone = process.env.ALIGO_SENDER_PHONE || "01095207839";
-    let primaryTplCode = process.env.ALIGO_TEMPLATE_CODE || "UJ_6650";
+    let apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
+    let userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
+    let senderKey = getEnvVal("ALIGO_SENDER_KEY", "90393b608b562a491a73e74e7e5331b8b41ba0e0");
+    let senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
+    let primaryTplCode = getEnvVal("ALIGO_TEMPLATE_CODE", "UJ_6650");
 
     const recipients = [
       { phone: caregiverPhone, role: "간병인" },
@@ -395,20 +414,9 @@ app.post("/api/send-contract", async (req, res) => {
 
 온가족간병협회 고객센터: 010-9520-7839`;
 
-    let apiKey = process.env.ALIGO_API_KEY;
-    if (!apiKey || apiKey === "" || apiKey === "undefined") {
-      apiKey = "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
-    }
-
-    let userId = process.env.ALIGO_USER_ID;
-    if (!userId || userId === "" || userId === "undefined") {
-      userId = "ongajok1090";
-    }
-
-    let senderPhone = process.env.ALIGO_SENDER_PHONE;
-    if (!senderPhone || senderPhone === "" || senderPhone === "undefined") {
-      senderPhone = "01095207839";
-    }
+    let apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
+    let userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
+    let senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
 
     // Recipients: client, caregiver, and Association Customer Center "010-9520-7839"
     const recipients = [
@@ -504,11 +512,6 @@ app.post("/api/send-contract", async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
 // JSON Fallback Handler for unknown /api/* endpoints
 app.all("/api/*", (req, res) => {
   console.warn(`⚠️ [API 404 Not Found] ${req.method} ${req.originalUrl}`);
@@ -519,6 +522,8 @@ app.all("/api/*", (req, res) => {
     method: req.method
   });
 });
+
+export default app;
 
 // Configure Vite or Static Assets serving
 async function startServer() {
@@ -536,9 +541,13 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
