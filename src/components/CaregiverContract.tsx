@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { FileText, ArrowLeft, Printer, CheckCircle2, User, Phone, MapPin, DollarSign, PenTool, Check, AlertTriangle, Sparkles, MessageCircle, X } from "lucide-react";
 import { CaregiverRegistration } from "../types";
+import { getApiUrl } from "../lib/apiConfig";
 
 interface CaregiverContractProps {
   onBack: () => void;
@@ -298,7 +299,9 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
     // Trigger server-side Aligo SMS API proxy
     (async () => {
       try {
-        const res = await fetch("/api/send-contract", {
+        const apiUrl = getApiUrl("/api/send-contract");
+        console.log(`📡 Requesting Aligo Contract SMS API at URL: ${apiUrl}`);
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

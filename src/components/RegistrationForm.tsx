@@ -4,6 +4,7 @@ import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, 
 import { CaregiverRegistration, WebsiteConfig } from "../types";
 import { KOREAN_INSURANCE_COMPANIES } from "../data";
 import MascotOni from "./MascotOni";
+import { getApiUrl } from "../lib/apiConfig";
 
 interface RegistrationFormProps {
   config: WebsiteConfig;
@@ -134,7 +135,9 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     // Trigger server-side Aligo Alimtalk / SMS API proxy
     (async () => {
       try {
-        const res = await fetch("/api/send-alimtalk", {
+        const apiUrl = getApiUrl("/api/send-alimtalk");
+        console.log(`📡 Requesting Aligo Alimtalk API at URL: ${apiUrl}`);
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

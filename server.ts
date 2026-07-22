@@ -23,6 +23,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Request Logger for API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    console.log(`🌐 [API Request] ${req.method} ${req.originalUrl} | Origin: ${req.headers.origin || 'same-origin'} | UA: ${req.headers['user-agent'] || 'none'}`);
+  }
+  next();
+});
+
 // Debug route to safely verify environment variables on the running server
 app.get("/api/debug-env", (req, res) => {
   const envKeys = Object.keys(process.env);
@@ -449,6 +457,22 @@ app.post("/api/send-contract", async (req, res) => {
       error: error.message
     });
   }
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// JSON Fallback Handler for unknown /api/* endpoints
+app.all("/api/*", (req, res) => {
+  console.warn(`⚠️ [API 404 Not Found] ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    message: `[서버 연동 오류 404] API 경로(${req.originalUrl})를 찾을 수 없습니다. (엔드포인트 라우팅 확인 필요)`,
+    requestedUrl: req.originalUrl,
+    method: req.method
+  });
 });
 
 // Configure Vite or Static Assets serving
