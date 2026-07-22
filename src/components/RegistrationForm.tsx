@@ -40,6 +40,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     guardianPhone: string;
     caregiverName: string;
     patientName: string;
+    guardianName: string;
     isSending: boolean;
     mode?: "simulated" | "live";
     statusMessage?: string;
@@ -104,6 +105,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       guardianPhone: dataToSubmit.guardianPhone,
       caregiverName: dataToSubmit.caregiverName,
       patientName: dataToSubmit.patientName,
+      guardianName: dataToSubmit.guardianName,
       isSending: true,
       receivedAt: formattedReceivedAt,
     });
@@ -675,24 +677,22 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-[#F2F2F2] rounded-2xl p-3.5 border border-slate-200 text-[11px] leading-relaxed text-slate-800 font-semibold space-y-1 shadow-inner">
-                    <p className="text-[#372a24] font-black text-xs mb-1.5 flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      [가족간병 등록 접수 완료 안내]
+                  <div className="bg-[#F2F2F2] rounded-2xl p-3.5 border border-slate-200 text-[11px] leading-relaxed text-slate-800 font-semibold space-y-2 shadow-inner whitespace-pre-wrap text-left">
+                    <p className="text-[#372a24] font-black text-xs mb-1">
+                      가족간병 등록 접수 완료 안내
                     </p>
-                    <p>안녕하세요, 온가족간병협회입니다.</p>
-                    <p className="text-blue-900 font-extrabold mt-1">
-                      보호자님께서 기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
-                    </p>
-                    <p className="text-xs text-indigo-700 font-extrabold bg-indigo-50 p-2 rounded-lg mt-1 border border-indigo-100">
-                      📢 "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생한다." (협회 운영규정)
-                    </p>
-                    <div className="pt-2 mt-2 border-t border-slate-200 space-y-1 text-[10px] text-slate-600 font-bold">
-                      <p>• 간병인: {notificationModal.caregiverName} 님</p>
-                      <p>• 환자명: {notificationModal.patientName} 님</p>
-                      <p className="text-blue-700 font-black">• 시스템 자동 접수일시: {notificationModal.receivedAt}</p>
-                      <p>• 상태: 접수일 기준 등록 효력 실시간 발생</p>
+                    <p>안녕하세요.</p>
+                    <p>온가족간병협회입니다.</p>
+                    <p>기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.</p>
+                    <p> "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)</p>
+                    <div className="pt-2 border-t border-slate-200 space-y-1">
+                      <p>간병인: <span className="text-blue-900 font-extrabold">{notificationModal.caregiverName}</span>님</p>
+                      <p>보호자: <span className="text-blue-900 font-extrabold">{notificationModal.guardianName}</span>님</p>
                     </div>
+                    <p className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-normal font-semibold">
+                      ▶️문의사항은 고객센터(010-9520-7839)로 연락주세요.{"\n"}
+                      <span className="text-[9px] text-slate-400">채널 추가하고 이 채널의 광고와 마케팅 메시지를 카카오톡으로 받기</span>
+                    </p>
                   </div>
 
                   <p className="text-[10px] text-slate-400 leading-snug font-bold">

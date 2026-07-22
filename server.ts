@@ -33,25 +33,19 @@ app.get("/api/debug-env", (req, res) => {
   });
 });
 
-// Kakao approved Alimtalk template (UJ_5407)
-const KAKAO_TEMPLATE_UJ_5407 = `[가족간병 등록 접수 완료 안내]
-안녕하세요, 온가족간병협회입니다.
+// Kakao approved Alimtalk template (UJ_6650)
+const KAKAO_TEMPLATE_UJ_6650 = `가족간병 등록 접수 완료 안내
 
-보호자님께서 기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
+안녕하세요.
+온가족간병협회입니다.
+기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
 
-📢 "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생한다." (협회 운영규정)
+ "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
 
-■ 신청 상세 내역
-• 간병인: #{caregiverName} 님
-• 환자명: #{patientName} 님
-• 보호자: #{guardianName} 님
-• 병원: #{hospitalName}
-• 입원일: #{admissionDate}
-• 간병비: #{caregivingFee}
-• 상태: 접수일 기준 등록 효력 실시간 발생
+간병인: #{간병인명}님
+보호자: #{보호자명}님
 
-본 수신 고지는 증빙 보존용으로 발송되었습니다.
-온가족간병협회 고객센터: 010-9520-7839`;
+▶️문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
 
 /**
  * Validates that the final message perfectly matches the Kakao approved template structure.
@@ -60,15 +54,11 @@ function validateMessageAgainstTemplate(message: string): boolean {
   // Escape special characters in template for regex
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   
-  let pattern = escapeRegExp(KAKAO_TEMPLATE_UJ_5407);
+  let pattern = escapeRegExp(KAKAO_TEMPLATE_UJ_6650);
   // Replace escaped placeholders with capture groups (.+) matching non-empty values
   pattern = pattern
-    .replace("#\\{caregiverName\\}", "(.+)")
-    .replace("#\\{patientName\\}", "(.+)")
-    .replace("#\\{guardianName\\}", "(.+)")
-    .replace("#\\{hospitalName\\}", "(.+)")
-    .replace("#\\{admissionDate\\}", "(.+)")
-    .replace("#\\{caregivingFee\\}", "(.+)");
+    .replace("#\\{간병인명\\}", "(.+)")
+    .replace("#\\{보호자명\\}", "(.+)");
     
   const regex = new RegExp(`^${pattern}$`);
   return regex.test(message);
@@ -96,21 +86,17 @@ app.post("/api/send-alimtalk", async (req, res) => {
     }
 
     // Compile message based on Kakao approved template
-    const msg = KAKAO_TEMPLATE_UJ_5407
-      .replace("#{caregiverName}", caregiverName)
-      .replace("#{patientName}", patientName)
-      .replace("#{guardianName}", guardianName || "미기재")
-      .replace("#{hospitalName}", hospitalName || "미기재")
-      .replace("#{admissionDate}", admissionDate || "미기재")
-      .replace("#{caregivingFee}", caregivingFee || "협의");
+    const msg = KAKAO_TEMPLATE_UJ_6650
+      .replace("#{간병인명}", caregiverName)
+      .replace("#{보호자명}", guardianName || "미기재");
 
     // 100% strict automated validation checking before calling the API
     if (!validateMessageAgainstTemplate(msg)) {
       return res.status(400).json({
         success: false,
-        message: "알림톡 발송 실패: 생성된 메시지 본문이 카카오 승인 템플릿(UJ_5407) 규격과 100% 일치하지 않습니다. 운영 정책상 전송이 제한되었습니다.",
+        message: "알림톡 발송 실패: 생성된 메시지 본문이 카카오 승인 템플릿(UJ_6650) 규격과 100% 일치하지 않습니다. 운영 정책상 전송이 제한되었습니다.",
         generatedMessage: msg,
-        templateExpected: KAKAO_TEMPLATE_UJ_5407
+        templateExpected: KAKAO_TEMPLATE_UJ_6650
       });
     }
 
@@ -154,11 +140,14 @@ app.post("/api/send-alimtalk", async (req, res) => {
       const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
       const formattedSender = senderPhone.replace(/[^0-9]/g, "");
 
+      // Use ALIGO_TEMPLATE_CODE from process.env if provided, otherwise default to UJ_6650
+      const activeTemplateCode = process.env.ALIGO_TEMPLATE_CODE || "UJ_6650";
+
       const params = new URLSearchParams();
       params.append("apikey", apiKey);
       params.append("userid", userId);
       params.append("senderkey", senderKey);
-      params.append("tpl_code", "UJ_5407"); // Official approved Template Code
+      params.append("tpl_code", activeTemplateCode); // Official approved Template Code (UJ_6650)
       params.append("sender", formattedSender);
       params.append("receiver_1", formattedReceiver);
       params.append("subject_1", "[가족간병 등록 접수 완료]");
