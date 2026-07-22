@@ -23,6 +23,7 @@ export interface ContractSMSPayload {
 export interface DispatchResult {
   success: boolean;
   mode: string;
+  deliverySummary?: "alimtalk_success" | "sms_fallback_success" | "all_failed";
   message: string;
   templateUsed?: string;
   recipients?: any[];

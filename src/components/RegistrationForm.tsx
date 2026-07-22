@@ -43,7 +43,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     patientName: string;
     guardianName: string;
     isSending: boolean;
-    mode?: "simulated" | "live";
+    mode?: string;
+    deliverySummary?: "alimtalk_success" | "sms_fallback_success" | "all_failed";
     statusMessage?: string;
     receivedAt?: string;
   } | null>(null);
@@ -143,10 +144,9 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
             ? {
                 ...prev,
                 isSending: false,
-                mode: result.success 
-                  ? (result.mode || "live") 
-                  : (result.mode === "live" ? "live_failed" : (result.mode || "error_config")),
-                statusMessage: result.message || "알림톡 발송이 완료되었습니다.",
+                mode: result.mode || "live",
+                deliverySummary: result.deliverySummary || (result.success ? "alimtalk_success" : "all_failed"),
+                statusMessage: result.message || "발송 처리가 완료되었습니다.",
               }
             : null
         );
@@ -158,7 +158,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 ...prev,
                 isSending: false,
                 mode: "error_config",
-                statusMessage: `알림톡 발송 중 오류: ${err.message || "네트워크 오류"}.`,
+                deliverySummary: "all_failed",
+                statusMessage: `알림톡/문자 발송 중 오류: ${err.message || "네트워크 오류"}.`,
               }
             : null
         );
@@ -703,19 +704,23 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     </div>
                   ) : (
                     <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
-                      (notificationModal.mode === "error_config" || notificationModal.mode === "live_failed")
+                      notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config"
                         ? "bg-rose-50 text-rose-800 border-rose-200"
+                        : notificationModal.deliverySummary === "sms_fallback_success"
+                        ? "bg-blue-50 text-blue-900 border-blue-200"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
                       <p className="flex items-center gap-1 text-xs font-black">
-                        {(notificationModal.mode === "error_config" || notificationModal.mode === "live_failed") ? (
+                        {(notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config") ? (
                           <X className="w-4 h-4 text-rose-600" />
                         ) : (
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
                         )}
-                        {(notificationModal.mode === "error_config" || notificationModal.mode === "live_failed")
-                          ? "알림톡 발송 실패"
-                          : "알림톡 발송이 완료되었습니다."}
+                        {notificationModal.deliverySummary === "alimtalk_success"
+                          ? "알림톡 발송 성공"
+                          : notificationModal.deliverySummary === "sms_fallback_success"
+                          ? "알림톡 실패 → 문자(LMS) 발송 성공"
+                          : "알림톡 및 문자 발송 실패"}
                       </p>
                       <p className="text-[9px] font-semibold leading-relaxed">
                         {notificationModal.statusMessage}

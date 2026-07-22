@@ -136,7 +136,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
     const cName = caregiverName.trim();
     const gName = (guardianName || "미기재").trim();
 
-    // Compile message variations
+    // Compile message variations strictly matching approved template UJ_6650
     const msgUJ6650Full = KAKAO_TEMPLATE_UJ_6650.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
     const msgUJ6650NoFooter = KAKAO_TEMPLATE_UJ_6650_NO_FOOTER.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
     const msgUJ5407 = KAKAO_TEMPLATE_UJ_5407.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
@@ -144,7 +144,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
     // Primary message
     const msg = msgUJ6650Full;
 
-    // Credentials checks (fallback to user credentials if environment variable is missing)
+    // Credentials
     let apiKey = process.env.ALIGO_API_KEY || "a84t4xtpv4pu9k107tlook6lj8mpt3dh";
     let userId = process.env.ALIGO_USER_ID || "ongajok1090";
     let senderKey = process.env.ALIGO_SENDER_KEY || "90393b608b562a491a73e74e7e5331b8b41ba0e0";
@@ -158,13 +158,39 @@ app.post("/api/send-alimtalk", async (req, res) => {
     ];
 
     console.log("=========================================");
-    console.log(`📡 [Aligo API Live Send Initialization]`);
+    console.log(`📡 [Aligo API Dispatch Request]`);
     console.log(`- API User ID: ${userId}`);
-    console.log(`- API Key (masked): ${apiKey.substring(0, 8)}...`);
-    console.log(`- Sender Key: ${senderKey}`);
     console.log(`- Sender Phone: ${senderPhone}`);
-    console.log(`- Primary Template Code: ${primaryTplCode}`);
+    console.log(`- Primary Template: ${primaryTplCode}`);
     console.log("=========================================");
+
+    // Helper for Direct LMS/SMS Fallback
+    const sendAligoSmsDirect = async (receiverNum: string, titleText: string, messageBody: string) => {
+      const smsParams = new URLSearchParams();
+      smsParams.append("key", apiKey);
+      smsParams.append("user_id", userId);
+      smsParams.append("sender", senderPhone.replace(/[^0-9]/g, ""));
+      smsParams.append("receiver", receiverNum.replace(/[^0-9]/g, ""));
+      smsParams.append("title", titleText);
+      smsParams.append("msg", messageBody);
+
+      console.log(`📱 [LMS Fallback Request] URL: https://apis.aligo.in/send/ | Target: ${receiverNum}`);
+      
+      try {
+        const smsRes = await fetch("https://apis.aligo.in/send/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: smsParams.toString()
+        });
+        const smsJson: any = await smsRes.json();
+        console.log(`📥 [LMS Fallback Response JSON]:`, JSON.stringify(smsJson, null, 2));
+        const isSmsOk = smsJson && (smsJson.result_code === "1" || smsJson.result_code === 1);
+        return { isSuccess: isSmsOk, data: smsJson, status: smsRes.status };
+      } catch (smsErr: any) {
+        console.error(`❌ [LMS Fallback Network Error]:`, smsErr.message);
+        return { isSuccess: false, data: { error: smsErr.message }, status: 500 };
+      }
+    };
 
     const results = [];
     for (const recipient of recipients) {
@@ -182,128 +208,134 @@ app.post("/api/send-alimtalk", async (req, res) => {
         params.append("subject_1", "[가족간병 등록 접수 완료]");
         params.append("message_1", messageBody);
         
-        // Failover settings for SMS
+        // Failover settings
         params.append("failover", "Y");
         params.append("fsender", formattedSender);
         params.append("fsubject_1", "[가족간병 등록 접수 완료]");
         params.append("fmessage_1", messageBody);
 
-        console.log(`\n📤 [Aligo API Request] Target: ${recipient.role} (${formattedReceiver})`);
-        console.log(`   - Template Code: ${tplCode}`);
-        console.log(`   - Message Length: ${messageBody.length} chars`);
-        console.log(`   - Payload: userid=${userId}, senderkey=${senderKey}, sender=${formattedSender}, receiver_1=${formattedReceiver}`);
+        console.log(`\n📤 [Aligo Alimtalk Request] Target: ${recipient.role} (${formattedReceiver}) | Template: ${tplCode}`);
 
         const response = await fetch("https://kakaoapi.aligo.in/akv10/alimtalk/send/", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params.toString()
         });
 
         const status = response.status;
         const resultJson: any = await response.json();
 
-        console.log(`📥 [Aligo API Response JSON for ${recipient.role}]:`);
+        console.log(`📥 [Aligo Alimtalk Response Raw for ${recipient.role}]: HTTP ${status}`);
         console.log(JSON.stringify(resultJson, null, 2));
 
-        return { status, resultJson, tplCode, messageBody };
+        const isOk = resultJson && (
+          resultJson.code === 0 || 
+          resultJson.code === "0" || 
+          resultJson.result_code === "1" || 
+          resultJson.result_code === 1
+        );
+
+        return { status, resultJson, tplCode, messageBody, isSuccess: isOk };
       };
 
       try {
         // Attempt 1: UJ_6650 with full template body
-        let resData = await executeAlimtalkSend("UJ_6650", msgUJ6650Full);
-        let { status, resultJson } = resData;
+        let alimtalkRes = await executeAlimtalkSend("UJ_6650", msgUJ6650Full);
 
-        // Check if Alimtalk failed due to template mismatch or rejected body
-        const isTemplateError = resultJson && (
-          resultJson.code === -3008 || 
-          resultJson.code === -3010 || 
-          resultJson.code === -3011 ||
-          (resultJson.message && (resultJson.message.includes("템플릿") || resultJson.message.includes("일치")))
+        // If template error (-3008, -3010, -3011, etc.), retry UJ_6650 without footer or UJ_5407
+        const isTemplateError = alimtalkRes.resultJson && (
+          alimtalkRes.resultJson.code === -3008 || 
+          alimtalkRes.resultJson.code === -3010 || 
+          alimtalkRes.resultJson.code === -3011 ||
+          (alimtalkRes.resultJson.message && (alimtalkRes.resultJson.message.includes("템플릿") || alimtalkRes.resultJson.message.includes("일치")))
         );
 
-        // Attempt 2: If UJ_6650 full body failed, retry UJ_6650 without footer line
-        if (isTemplateError) {
-          console.warn(`⚠️ [Template Retry 1] UJ_6650 full body mismatch. Retrying UJ_6650 without footer line for ${recipient.role}...`);
-          resData = await executeAlimtalkSend("UJ_6650", msgUJ6650NoFooter);
-          resultJson = resData.resultJson;
+        if (!alimtalkRes.isSuccess && isTemplateError) {
+          console.warn(`⚠️ [Template Reject Retry 1] Retrying UJ_6650 without footer line for ${recipient.role}...`);
+          alimtalkRes = await executeAlimtalkSend("UJ_6650", msgUJ6650NoFooter);
         }
 
-        // Attempt 3: If UJ_6650 still fails, retry with secondary approved template UJ_5407
-        const stillFailed = resultJson && (resultJson.code !== 0 && resultJson.code !== "0" && resultJson.result_code !== 1 && resultJson.result_code !== "1");
-        if (stillFailed && isTemplateError) {
-          console.warn(`⚠️ [Template Retry 2] Retrying with secondary approved template UJ_5407 for ${recipient.role}...`);
-          resData = await executeAlimtalkSend("UJ_5407", msgUJ5407);
-          resultJson = resData.resultJson;
+        if (!alimtalkRes.isSuccess && isTemplateError) {
+          console.warn(`⚠️ [Template Reject Retry 2] Retrying secondary approved UJ_5407 for ${recipient.role}...`);
+          alimtalkRes = await executeAlimtalkSend("UJ_5407", msgUJ5407);
         }
 
-        const isSuccess = 
-          resultJson.code === 0 || 
-          resultJson.code === "0" || 
-          resultJson.result_code === "1" || 
-          resultJson.result_code === 1 ||
-          resultJson.status === "success";
+        let smsResult = null;
+        let deliveryStatus: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
 
-        if (!isSuccess) {
-          console.error(`❌ [Kakao/Aligo Rejection Analysis for ${recipient.role}]:`);
-          console.error(`   - Return Code: ${resultJson.code}`);
-          console.error(`   - Message: ${resultJson.message}`);
-          console.error(`   - Fail Cause: ${resultJson.info ? JSON.stringify(resultJson.info) : 'N/A'}`);
+        if (alimtalkRes.isSuccess) {
+          deliveryStatus = "alimtalk_success";
+        } else {
+          // REQUIREMENT ② & ⑥: Alimtalk failed or rejected -> Immediate Direct LMS/SMS Fallback
+          console.warn(`🚨 [Alimtalk Reject/Failure for ${recipient.role} (${formattedReceiver})] Code: ${alimtalkRes.resultJson?.code}, Message: ${alimtalkRes.resultJson?.message}. Initiating Direct LMS Fallback via https://apis.aligo.in/send/...`);
+          
+          smsResult = await sendAligoSmsDirect(
+            formattedReceiver,
+            "[가족간병 등록 접수 완료]",
+            msgUJ6650NoFooter
+          );
+
+          if (smsResult.isSuccess) {
+            console.log(`✅ [LMS Fallback Success for ${recipient.role} (${formattedReceiver})] msg_id: ${smsResult.data?.msg_id}`);
+            deliveryStatus = "sms_fallback_success";
+          } else {
+            console.error(`❌ [LMS Fallback Failed for ${recipient.role} (${formattedReceiver})] code: ${smsResult.data?.result_code}, msg: ${smsResult.data?.message}`);
+            deliveryStatus = "all_failed";
+          }
         }
+
+        results.push({
+          phone: recipient.phone,
+          role: recipient.role,
+          deliveryStatus,
+          alimtalkSuccess: alimtalkRes.isSuccess,
+          alimtalkData: alimtalkRes.resultJson,
+          smsFallbackSuccess: smsResult ? smsResult.isSuccess : false,
+          smsData: smsResult ? smsResult.data : null,
+          templateUsed: alimtalkRes.tplCode
+        });
+
+      } catch (err: any) {
+        console.error(`❌ Dispatch Exception for ${recipient.role}:`, err.message);
+        
+        // Try emergency LMS direct
+        const emergencySms = await sendAligoSmsDirect(formattedReceiver, "[가족간병 등록 접수 완료]", msgUJ6650NoFooter);
         
         results.push({
           phone: recipient.phone,
           role: recipient.role,
-          success: isSuccess,
-          templateUsed: resData.tplCode,
-          data: resultJson
-        });
-      } catch (err: any) {
-        console.error(`❌ Network / Server Error for ${recipient.role}:`, err.message);
-        results.push({
-          phone: recipient.phone,
-          role: recipient.role,
-          success: false,
+          deliveryStatus: emergencySms.isSuccess ? "sms_fallback_success" : "all_failed",
+          alimtalkSuccess: false,
+          alimtalkData: { error: err.message },
+          smsFallbackSuccess: emergencySms.isSuccess,
+          smsData: emergencySms.data,
           error: err.message
         });
       }
     }
 
-    const anySuccess = results.some(r => r.success);
+    const anyAlimtalkSuccess = results.some(r => r.deliveryStatus === "alimtalk_success");
+    const anySmsSuccess = results.some(r => r.deliveryStatus === "sms_fallback_success");
+    const anySuccess = anyAlimtalkSuccess || anySmsSuccess;
 
-    // Dynamically retrieve current server Outbound IP
-    let outboundIp = "34.34.244.39";
-    try {
-      const ipRes = await fetch("https://api.ipify.org?format=json");
-      const ipData: any = await ipRes.json();
-      if (ipData && ipData.ip) {
-        outboundIp = ipData.ip;
-      }
-    } catch (e) {
-      console.warn("Failed to fetch outbound IP dynamically:", e);
-    }
+    let overallSummary: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
+    let displayMessage = "";
 
-    console.log(`ℹ️ Current Server Outbound IP: ${outboundIp}`);
-
-    const isIpError = results.some(r => r.data && (r.data.code === -99 || r.data.code === "-99") && r.data.message && (r.data.message.includes("IP") || r.data.message.includes("서버 IP") || r.data.message.includes("인증되지 않는")));
-    const isSenderPhoneError = results.some(r => r.data && (r.data.code === -99 || r.data.code === "-99") && r.data.message && (r.data.message.includes("발신자") || r.data.message.includes("발신번호") || r.data.message.includes("sender")));
-
-    let displayMessage = "가족간병인 등록 알림톡/문자 발송이 성공하였습니다.";
-    if (!anySuccess) {
-      if (isIpError) {
-        displayMessage = `[알리고 IP 허용 오류] 알리고에 등록되지 않은 서버 IP(${outboundIp})에서 발송을 시도했습니다. 알리고 사이트의 [발송서버 IP등록] 메뉴에 현재 서버 IP인 '${outboundIp}'를 등록하신 후 다시 시도해 주세요.`;
-      } else if (isSenderPhoneError) {
-        displayMessage = `[알리고 발신번호 미등록 오류] 발신자 번호 '${senderPhone}'가 알리고 사이트에 '발신번호'로 등록되어 있지 않습니다. 알리고 사이트의 [발신번호 관리] 메뉴에 이 번호를 추가하신 후 다시 시도해 주세요.`;
-      } else {
-        const errorDetails = results.map(r => `[${r.role}] Code:${r.data?.code || 'ERR'} (${r.data?.message || r.error})`).join(', ');
-        displayMessage = `알림톡 실제 전송 결과: ${errorDetails} (서버 Outbound IP: ${outboundIp})`;
-      }
+    if (results.every(r => r.deliveryStatus === "alimtalk_success")) {
+      overallSummary = "alimtalk_success";
+      displayMessage = "가족간병인 등록 알림톡이 카카오톡으로 정상 발송되었습니다.";
+    } else if (anySuccess) {
+      overallSummary = "sms_fallback_success";
+      displayMessage = "알림톡 발송 중 일부 오류가 발생하여 대체 문자(LMS)로 정상 발송되었습니다.";
+    } else {
+      overallSummary = "all_failed";
+      displayMessage = "알림톡 및 문자 발송에 모두 실패했습니다. (알리고 IP 및 발신자 번호 설정 확인 필요)";
     }
 
     return res.json({
       success: anySuccess,
       mode: "live",
+      deliverySummary: overallSummary,
       message: displayMessage,
       templateUsed: primaryTplCode,
       recipients: results,
