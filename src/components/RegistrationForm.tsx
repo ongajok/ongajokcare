@@ -146,7 +146,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 isSending: false,
                 mode: result.mode || "live",
                 deliverySummary: result.deliverySummary || (result.success ? "alimtalk_success" : "all_failed"),
-                statusMessage: result.message || "발송 처리가 완료되었습니다.",
+                statusMessage: result.message || (result.success ? "발송 처리가 완료되었습니다." : "알림톡 및 문자 발송에 실패했습니다."),
               }
             : null
         );
