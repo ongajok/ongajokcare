@@ -48,63 +48,19 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Load registrations from localStorage with auto-clean / seed
+  // Load registrations from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ongajok_registrations");
-      const todayStr = new Date().toISOString().split("T")[0];
       let parsed = [];
       if (saved) {
         try {
           parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            parsed = parsed.filter((reg: any) => reg.id !== "reg-mock-1" && reg.caregiverName !== "홍길동" && reg.caregiverPhone !== "010-1234-5678");
+          }
         } catch (e) {
           parsed = [];
-        }
-      }
-      
-      if (!parsed || parsed.length === 0) {
-        parsed = [
-          {
-            id: "reg-mock-1",
-            caregiverName: "홍길동",
-            caregiverPhone: "010-1234-5678",
-            caregiverSsn: "1980년 01월 01일 (또는 800101)",
-            relationship: "자녀",
-            patientName: "홍길동",
-            guardianName: "홍길동 (통상 간병비 청구 보호자)",
-            guardianPhone: "010-1234-5678",
-            insuranceCompany: "KB손해보험",
-            hospitalName: "서울대학교병원",
-            admissionDate: todayStr,
-            caregivingFee: "140,000원",
-            createdAt: new Date().toISOString()
-          }
-        ];
-        localStorage.setItem("ongajok_registrations", JSON.stringify(parsed));
-      } else {
-        let isModified = false;
-        parsed = parsed.map((reg: any) => {
-          if (reg.id === "reg-mock-1" || reg.patientName === "석은영" || reg.caregiverName === "온가족" || reg.guardianPhone === "010-8765-4321") {
-            isModified = true;
-            return {
-              ...reg,
-              caregiverName: "홍길동",
-              caregiverPhone: "010-1234-5678",
-              caregiverSsn: "1980년 01월 01일 (또는 800101)",
-              relationship: "자녀",
-              patientName: "홍길동",
-              guardianName: "홍길동 (통상 간병비 청구 보호자)",
-              guardianPhone: "010-1234-5678",
-              insuranceCompany: "KB손해보험",
-              hospitalName: "서울대학교병원",
-              admissionDate: todayStr,
-              caregivingFee: "140,000원",
-            };
-          }
-          return reg;
-        });
-        if (isModified) {
-          localStorage.setItem("ongajok_registrations", JSON.stringify(parsed));
         }
       }
 
