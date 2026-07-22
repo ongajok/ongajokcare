@@ -132,15 +132,31 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     });
 
     // Trigger server-side Aligo Alimtalk / SMS API proxy
-    fetch("/api/send-alimtalk", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dataToSubmit),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    (async () => {
+      try {
+        const res = await fetch("/api/send-alimtalk", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSubmit),
+        });
+
+        const contentType = res.headers.get("content-type");
+        let data: any = {};
+
+        if (contentType && contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          console.error("Non-JSON API response received:", res.status, text);
+          data = {
+            success: false,
+            mode: "error_config",
+            message: `[서버 연동 오류 ${res.status}] API 서버 응답이 올바르지 않습니다. (백엔드 서버 라우팅 확인 필요)`,
+          };
+        }
+
         setNotificationModal((prev) =>
           prev
             ? {
@@ -149,12 +165,11 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 mode: data.success 
                   ? (data.mode || "live") 
                   : (data.mode === "live" ? "live_failed" : (data.mode || "error_config")),
-                statusMessage: data.message,
+                statusMessage: data.message || "알림톡 발송 중 처리 오류가 발생했습니다.",
               }
             : null
         );
-      })
-      .catch((err) => {
+      } catch (err: any) {
         console.error("Aligo API send error:", err);
         setNotificationModal((prev) =>
           prev
@@ -162,11 +177,12 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 ...prev,
                 isSending: false,
                 mode: "error_config",
-                statusMessage: "서버와의 연동 통신 중 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. API 서버가 연결 가능한 상태인지 확인해 주세요.`,
               }
             : null
         );
-      });
+      }
+    })();
   };
 
   return (
