@@ -703,27 +703,33 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                       실시간 알리고 알림톡 전송 처리 중...
                     </div>
                   ) : (
-                    <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
+                    <div className={`text-[11px] p-3 rounded-xl border font-bold flex flex-col gap-1.5 whitespace-pre-wrap ${
                       notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config"
                         ? "bg-rose-50 text-rose-800 border-rose-200"
                         : notificationModal.deliverySummary === "sms_fallback_success"
                         ? "bg-blue-50 text-blue-900 border-blue-200"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
-                      <p className="flex items-center gap-1 text-xs font-black">
+                      <p className="flex items-center gap-1.5 text-xs font-black">
                         {(notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config") ? (
-                          <X className="w-4 h-4 text-rose-600" />
+                          <X className="w-4 h-4 text-rose-600 shrink-0" />
                         ) : (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                         )}
-                        {notificationModal.deliverySummary === "alimtalk_success"
-                          ? "알림톡 발송 성공"
-                          : notificationModal.deliverySummary === "sms_fallback_success"
-                          ? "알림톡 실패 → 문자(LMS) 발송 성공"
-                          : "알림톡 및 문자 발송 실패"}
+                        <span>
+                          {notificationModal.deliverySummary === "alimtalk_success"
+                            ? "알림톡 발송 성공"
+                            : notificationModal.deliverySummary === "sms_fallback_success"
+                            ? "대체 문자(LMS) 발송 성공"
+                            : "알림톡 발송 실패"}
+                        </span>
                       </p>
-                      <p className="text-[9px] font-semibold leading-relaxed">
-                        {notificationModal.statusMessage}
+                      <p className="text-[10px] font-medium leading-relaxed pl-5 text-slate-700">
+                        {notificationModal.statusMessage || (
+                          notificationModal.deliverySummary === "alimtalk_success"
+                            ? "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다."
+                            : "알림톡 발송 실패:\n(알리고 API 연동 오류)"
+                        )}
                       </p>
                     </div>
                   )}

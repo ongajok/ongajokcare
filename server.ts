@@ -361,14 +361,14 @@ app.post("/api/send-alimtalk", async (req, res) => {
 
     if (allAlimtalkSuccess) {
       overallSummary = "alimtalk_success";
-      displayMessage = "가족간병인 등록 알림톡이 카카오톡으로 정상 발송되었습니다.";
+      displayMessage = "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다.";
     } else if (anySuccess) {
       overallSummary = "sms_fallback_success";
-      displayMessage = "알림톡 발송 불가(또는 미수신)로 인해 대체 문자(LMS)로 정상 발송되었습니다.";
+      displayMessage = "가족간병 등록 접수가 완료되었습니다.\n대체 문자(LMS)가 정상 발송되었습니다.";
     } else {
       overallSummary = "all_failed";
-      const firstFailure = results.find(r => r.failureReason)?.failureReason || "알리고 IP 미등록 또는 발신번호 설정 오류";
-      displayMessage = `알림톡 및 문자 발송에 모두 실패했습니다. 사유: ${firstFailure}`;
+      const firstFailure = results.find(r => r.failureReason)?.failureReason || "[오류코드: -101] 인증오류입니다.-IP";
+      displayMessage = `알림톡 발송 실패:\n${firstFailure}`;
     }
 
     return res.json({
