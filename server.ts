@@ -12,6 +12,17 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Enable CORS for mobile browsers, KakaoTalk in-app webviews, and custom domains
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Debug route to safely verify environment variables on the running server
 app.get("/api/debug-env", (req, res) => {
   const envKeys = Object.keys(process.env);
@@ -35,33 +46,46 @@ app.get("/api/debug-env", (req, res) => {
 
 // Kakao approved Alimtalk template (UJ_6650)
 const KAKAO_TEMPLATE_UJ_6650 = `가족간병 등록 접수 완료 안내
-
 안녕하세요.
 온가족간병협회입니다.
 기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
 
- "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
+"협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
 
 간병인: #{간병인명}님
 보호자: #{보호자명}님
 
-▶️문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
+ℹ️ 문의사항은 고객센터(010-9520-7839)로 연락주세요.
+채널 추가하고 이 채널의 광고와 마케팅 메시지를 카카오톡으로 받기`;
+
+// Alternative without channel footer line if Kakao DB omits footer from message body
+const KAKAO_TEMPLATE_UJ_6650_NO_FOOTER = `가족간병 등록 접수 완료 안내
+안녕하세요.
+온가족간병협회입니다.
+기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
+
+"협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
+
+간병인: #{간병인명}님
+보호자: #{보호자명}님
+
+ℹ️ 문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
 
 /**
- * Validates that the final message perfectly matches the Kakao approved template structure.
+ * Validates that the final message matches the Kakao approved template structure.
  */
 function validateMessageAgainstTemplate(message: string): boolean {
-  // Escape special characters in template for regex
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   
-  let pattern = escapeRegExp(KAKAO_TEMPLATE_UJ_6650);
-  // Replace escaped placeholders with capture groups (.+) matching non-empty values
-  pattern = pattern
+  let pattern1 = escapeRegExp(KAKAO_TEMPLATE_UJ_6650)
     .replace("#\\{간병인명\\}", "(.+)")
     .replace("#\\{보호자명\\}", "(.+)");
     
-  const regex = new RegExp(`^${pattern}$`);
-  return regex.test(message);
+  let pattern2 = escapeRegExp(KAKAO_TEMPLATE_UJ_6650_NO_FOOTER)
+    .replace("#\\{간병인명\\}", "(.+)")
+    .replace("#\\{보호자명\\}", "(.+)");
+    
+  return new RegExp(`^${pattern1}$`).test(message) || new RegExp(`^${pattern2}$`).test(message);
 }
 
 // Real-time Aligo Alimtalk / SMS API proxy endpoint
@@ -86,15 +110,21 @@ app.post("/api/send-alimtalk", async (req, res) => {
     }
 
     // Compile message based on Kakao approved template
-    const msg = KAKAO_TEMPLATE_UJ_6650
-      .replace("#{간병인명}", caregiverName)
-      .replace("#{보호자명}", guardianName || "미기재");
+    const msgFull = KAKAO_TEMPLATE_UJ_6650
+      .replace("#{간병인명}", caregiverName.trim())
+      .replace("#{보호자명}", (guardianName || "미기재").trim());
 
-    // 100% strict automated validation checking before calling the API
+    const msgNoFooter = KAKAO_TEMPLATE_UJ_6650_NO_FOOTER
+      .replace("#{간병인명}", caregiverName.trim())
+      .replace("#{보호자명}", (guardianName || "미기재").trim());
+
+    const msg = msgFull;
+
+    // Automated validation checking before calling the API
     if (!validateMessageAgainstTemplate(msg)) {
       return res.status(400).json({
         success: false,
-        message: "알림톡 발송 실패: 생성된 메시지 본문이 카카오 승인 템플릿(UJ_6650) 규격과 100% 일치하지 않습니다. 운영 정책상 전송이 제한되었습니다.",
+        message: "알림톡 발송 실패: 생성된 메시지 본문이 카카오 승인 템플릿(UJ_6650) 규격과 일치하지 않습니다.",
         generatedMessage: msg,
         templateExpected: KAKAO_TEMPLATE_UJ_6650
       });
@@ -128,7 +158,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
     ];
 
     console.log("=========================================");
-    console.log(`📡 [Aligo API Live Init]`);
+    console.log(`📡 [Aligo API Live Init - Template UJ_6650]`);
     console.log(`- API User ID: ${userId}`);
     console.log(`- API Key (masked): ${apiKey.substring(0, 8)}...`);
     console.log(`- Sender Key: ${senderKey}`);
@@ -139,29 +169,25 @@ app.post("/api/send-alimtalk", async (req, res) => {
     for (const recipient of recipients) {
       const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
       const formattedSender = senderPhone.replace(/[^0-9]/g, "");
-
-      // Use ALIGO_TEMPLATE_CODE from process.env if provided, otherwise default to UJ_6650
       const activeTemplateCode = process.env.ALIGO_TEMPLATE_CODE || "UJ_6650";
 
-      const params = new URLSearchParams();
-      params.append("apikey", apiKey);
-      params.append("userid", userId);
-      params.append("senderkey", senderKey);
-      params.append("tpl_code", activeTemplateCode); // Official approved Template Code (UJ_6650)
-      params.append("sender", formattedSender);
-      params.append("receiver_1", formattedReceiver);
-      params.append("subject_1", "[가족간병 등록 접수 완료]");
-      params.append("message_1", msg);
-      
-      // Fallback configuration if Kakao Alimtalk fails
-      params.append("failover", "Y");
-      params.append("fsender", formattedSender);
-      params.append("fsubject_1", "[가족간병 등록 접수 완료]");
-      params.append("fmessage_1", msg);
+      const sendToAligo = async (messageBody: string) => {
+        const params = new URLSearchParams();
+        params.append("apikey", apiKey);
+        params.append("userid", userId);
+        params.append("senderkey", senderKey);
+        params.append("tpl_code", activeTemplateCode); // UJ_6650
+        params.append("sender", formattedSender);
+        params.append("receiver_1", formattedReceiver);
+        params.append("subject_1", "[가족간병 등록 접수 완료]");
+        params.append("message_1", messageBody);
+        
+        // Fallback configuration if Kakao Alimtalk fails
+        params.append("failover", "Y");
+        params.append("fsender", formattedSender);
+        params.append("fsubject_1", "[가족간병 등록 접수 완료]");
+        params.append("fmessage_1", messageBody);
 
-      console.log(`📤 Sending Alimtalk to ${recipient.role} (${formattedReceiver})...`);
-
-      try {
         const response = await fetch("https://kakaoapi.aligo.in/akv10/alimtalk/send/", {
           method: "POST",
           headers: {
@@ -172,8 +198,24 @@ app.post("/api/send-alimtalk", async (req, res) => {
 
         const status = response.status;
         const resultJson: any = await response.json();
+        return { status, resultJson };
+      };
+
+      console.log(`📤 Sending Alimtalk to ${recipient.role} (${formattedReceiver})...`);
+
+      try {
+        let { status, resultJson } = await sendToAligo(msgFull);
         console.log(`📡 [Aligo API Response status: ${status} for ${recipient.role}]:`, JSON.stringify(resultJson));
-        
+
+        // If template mismatch error occurs, attempt fallback with msgNoFooter
+        if (resultJson && (resultJson.code === -3008 || resultJson.code === -3010 || (resultJson.message && resultJson.message.includes("템플릿")))) {
+          console.warn(`⚠️ Primary template match failed. Retrying without footer line for ${recipient.role}...`);
+          const retryRes = await sendToAligo(msgNoFooter);
+          status = retryRes.status;
+          resultJson = retryRes.resultJson;
+          console.log(`📡 [Aligo API Retry Response status: ${status} for ${recipient.role}]:`, JSON.stringify(resultJson));
+        }
+
         const isSuccess = 
           resultJson.code === 0 || 
           resultJson.code === "0" || 

@@ -684,13 +684,13 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     <p>안녕하세요.</p>
                     <p>온가족간병협회입니다.</p>
                     <p>기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.</p>
-                    <p> "협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)</p>
+                    <p>"협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)</p>
                     <div className="pt-2 border-t border-slate-200 space-y-1">
                       <p>간병인: <span className="text-blue-900 font-extrabold">{notificationModal.caregiverName}</span>님</p>
                       <p>보호자: <span className="text-blue-900 font-extrabold">{notificationModal.guardianName}</span>님</p>
                     </div>
                     <p className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 leading-normal font-semibold">
-                      ▶️문의사항은 고객센터(010-9520-7839)로 연락주세요.{"\n"}
+                      ℹ️ 문의사항은 고객센터(010-9520-7839)로 연락주세요.{"\n"}
                       <span className="text-[9px] text-slate-400">채널 추가하고 이 채널의 광고와 마케팅 메시지를 카카오톡으로 받기</span>
                     </p>
                   </div>
