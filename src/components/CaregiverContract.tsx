@@ -1041,9 +1041,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                   </div>
                 ) : (
                   <div className={`text-[10px] p-2.5 rounded-xl border font-bold flex flex-col gap-1 ${
-                    contractNotification.mode === "simulated"
-                      ? "bg-amber-50 text-amber-800 border-amber-200"
-                      : (contractNotification.mode === "error_config" || contractNotification.mode === "live_failed")
+                    (contractNotification.mode === "error_config" || contractNotification.mode === "live_failed")
                       ? "bg-rose-50 text-rose-800 border-rose-200"
                       : "bg-emerald-50 text-emerald-800 border-emerald-200"
                   }`}>
@@ -1053,18 +1051,12 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                       ) : (
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
                       )}
-                      {contractNotification.mode === "simulated"
-                        ? "알리고 발송 완료 (시뮬레이션)"
-                        : contractNotification.mode === "error_config"
-                        ? "알리고 API 설정 필요 (실시간 전송)"
-                        : contractNotification.mode === "live_failed"
-                        ? "알림 문자 실제 전송 실패 (IP 또는 설정 오류)"
-                        : "실시간 실제 발송 완료"}
+                      {(contractNotification.mode === "error_config" || contractNotification.mode === "live_failed")
+                        ? "문자 발송 실패"
+                        : "알림 문자 발송이 완료되었습니다."}
                     </p>
-                    <p className="text-[9px] text-slate-500 font-semibold leading-relaxed">
-                      {contractNotification.statusMessage || (contractNotification.mode === "simulated"
-                        ? "API 키 미설정으로 가상 전송을 완료했습니다. 검수 완료 후 .env 설정 시 실제 발송됩니다."
-                        : "중개 계약 완료 알림이 관련 계약 당사자 및 협회 고객센터(010-9520-7839)로 실시간 전송되었습니다.")}
+                    <p className="text-[9px] font-semibold leading-relaxed">
+                      {contractNotification.statusMessage}
                     </p>
                   </div>
                 )}
