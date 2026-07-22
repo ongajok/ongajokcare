@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { FileText, ArrowLeft, Printer, CheckCircle2, User, Phone, MapPin, DollarSign, PenTool, Check, AlertTriangle, Sparkles, MessageCircle, X } from "lucide-react";
 import { CaregiverRegistration } from "../types";
-import { getApiUrl } from "../lib/apiConfig";
+import { smartApiFetch } from "../lib/apiConfig";
 
 interface CaregiverContractProps {
   onBack: () => void;
@@ -299,9 +299,8 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
     // Trigger server-side Aligo SMS API proxy
     (async () => {
       try {
-        const apiUrl = getApiUrl("/api/send-contract");
-        console.log(`📡 Requesting Aligo Contract SMS API at URL: ${apiUrl}`);
-        const res = await fetch(apiUrl, {
+        console.log(`📡 Requesting Aligo Contract SMS API proxy...`);
+        const res = await smartApiFetch("/api/send-contract", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -344,7 +343,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
                 ...prev,
                 isSending: false,
                 mode: "error_config",
-                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. API 서버가 연결 가능한 상태인지 확인해 주세요.`,
+                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. 인터넷 연결 및 API 서버 상태를 확인해 주세요.`,
               }
             : null
         );

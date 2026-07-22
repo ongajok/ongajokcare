@@ -1,27 +1,39 @@
 /**
- * Dynamically resolves the backend API Base URL.
- * Supports local preview, Cloud Run dev/pre environments, and external custom domains (e.g., ongajokcare.kr, KakaoTalk in-app webview).
+ * Smart API Fetch Utility that ensures seamless connectivity on PC, Mobile, 
+ * KakaoTalk in-app browsers, and custom domains (e.g. ongajokcare.kr).
  */
-export const getApiBaseUrl = (): string => {
-  if (typeof window !== "undefined") {
-    const origin = window.location.origin;
-    // If running on AI Studio Cloud Run or localhost, use current origin
-    if (
-      origin.includes("ais-dev-") ||
-      origin.includes("ais-pre-") ||
-      origin.includes("localhost") ||
-      origin.includes("127.0.0.1") ||
-      origin.includes("run.app")
-    ) {
-      return origin;
+export async function smartApiFetch(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  // 1. Primary Attempt: Same-Origin Relative Fetch (e.g. /api/send-alimtalk)
+  // Same-origin fetches never trigger CORS errors or browser webview security blocks.
+  try {
+    const res = await fetch(cleanEndpoint, options);
+    const contentType = res.headers.get("content-type") || "";
+    
+    if (res.ok && contentType.includes("application/json")) {
+      return res;
     }
+    console.warn(`⚠️ Relative fetch to ${cleanEndpoint} returned status ${res.status} (${contentType}). Trying fallback...`);
+  } catch (err: any) {
+    console.warn(`⚠️ Relative fetch to ${cleanEndpoint} failed: ${err?.message || err}. Trying fallback...`);
   }
-  // Production Cloud Run backend endpoint for external domains / Kakao in-app browser
-  return "https://ais-pre-yga4hzrbdlkj4ywjfxh73f-951708005562.asia-east1.run.app";
-};
+
+  // 2. Fallback Attempt: Direct Production Cloud Run URL
+  const fallbackBase = "https://ais-pre-yga4hzrbdlkj4ywjfxh73f-951708005562.asia-east1.run.app";
+  const fallbackUrl = `${fallbackBase}${cleanEndpoint}`;
+  console.log(`📡 Attempting fallback fetch to absolute URL: ${fallbackUrl}`);
+  
+  return await fetch(fallbackUrl, {
+    ...options,
+    mode: "cors",
+  });
+}
 
 export const getApiUrl = (endpoint: string): string => {
-  const baseUrl = getApiBaseUrl();
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${baseUrl}${cleanEndpoint}`;
+  return cleanEndpoint;
 };

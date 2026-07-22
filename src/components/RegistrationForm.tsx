@@ -4,7 +4,7 @@ import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, 
 import { CaregiverRegistration, WebsiteConfig } from "../types";
 import { KOREAN_INSURANCE_COMPANIES } from "../data";
 import MascotOni from "./MascotOni";
-import { getApiUrl } from "../lib/apiConfig";
+import { smartApiFetch } from "../lib/apiConfig";
 
 interface RegistrationFormProps {
   config: WebsiteConfig;
@@ -135,9 +135,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     // Trigger server-side Aligo Alimtalk / SMS API proxy
     (async () => {
       try {
-        const apiUrl = getApiUrl("/api/send-alimtalk");
-        console.log(`📡 Requesting Aligo Alimtalk API at URL: ${apiUrl}`);
-        const res = await fetch(apiUrl, {
+        console.log(`📡 Requesting Aligo Alimtalk API proxy...`);
+        const res = await smartApiFetch("/api/send-alimtalk", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -180,7 +179,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 ...prev,
                 isSending: false,
                 mode: "error_config",
-                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. API 서버가 연결 가능한 상태인지 확인해 주세요.`,
+                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. 인터넷 연결 및 API 서버 상태를 확인해 주세요.`,
               }
             : null
         );
