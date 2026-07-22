@@ -139,14 +139,16 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
         console.log(`📡 Sending registration Alimtalk for caregiver ${dataToSubmit.caregiverName}...`);
         const result = await sendRegistrationAlimtalk(dataToSubmit);
 
+        const isSuccess = result.success === true || result.deliverySummary === "alimtalk_success" || result.deliverySummary === "sms_fallback_success";
+
         setNotificationModal((prev) =>
           prev
             ? {
                 ...prev,
                 isSending: false,
-                mode: result.mode || "live",
-                deliverySummary: result.deliverySummary || (result.success ? "alimtalk_success" : "all_failed"),
-                statusMessage: result.message || (result.success ? "발송 처리가 완료되었습니다." : "알림톡 및 문자 발송에 실패했습니다."),
+                mode: result.mode || (isSuccess ? "live" : "error_config"),
+                deliverySummary: result.deliverySummary || (isSuccess ? "alimtalk_success" : "all_failed"),
+                statusMessage: result.message || (isSuccess ? "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다." : "알림톡 발송 실패"),
               }
             : null
         );
