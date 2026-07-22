@@ -4,7 +4,7 @@ import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, 
 import { CaregiverRegistration, WebsiteConfig } from "../types";
 import { KOREAN_INSURANCE_COMPANIES } from "../data";
 import MascotOni from "./MascotOni";
-import { smartApiFetch } from "../lib/apiConfig";
+import { sendRegistrationAlimtalk } from "../lib/aligoClient";
 
 interface RegistrationFormProps {
   config: WebsiteConfig;
@@ -132,42 +132,21 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       privacyPolicy: false,
     });
 
-    // Trigger server-side Aligo Alimtalk / SMS API proxy
+    // Trigger Aligo Alimtalk / SMS (using smart dual-tier dispatch)
     (async () => {
       try {
-        console.log(`📡 Requesting Aligo Alimtalk API proxy...`);
-        const res = await smartApiFetch("/api/send-alimtalk", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dataToSubmit),
-        });
-
-        const contentType = res.headers.get("content-type");
-        let data: any = {};
-
-        if (contentType && contentType.includes("application/json")) {
-          data = await res.json();
-        } else {
-          const text = await res.text();
-          console.error("Non-JSON API response received:", res.status, text);
-          data = {
-            success: false,
-            mode: "error_config",
-            message: `[서버 연동 오류 ${res.status}] API 서버 응답이 올바르지 않습니다. (백엔드 서버 라우팅 확인 필요)`,
-          };
-        }
+        console.log(`📡 Sending registration Alimtalk for caregiver ${dataToSubmit.caregiverName}...`);
+        const result = await sendRegistrationAlimtalk(dataToSubmit);
 
         setNotificationModal((prev) =>
           prev
             ? {
                 ...prev,
                 isSending: false,
-                mode: data.success 
-                  ? (data.mode || "live") 
-                  : (data.mode === "live" ? "live_failed" : (data.mode || "error_config")),
-                statusMessage: data.message || "알림톡 발송 중 처리 오류가 발생했습니다.",
+                mode: result.success 
+                  ? (result.mode || "live") 
+                  : (result.mode === "live" ? "live_failed" : (result.mode || "error_config")),
+                statusMessage: result.message || "알림톡 발송이 완료되었습니다.",
               }
             : null
         );
@@ -179,7 +158,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 ...prev,
                 isSending: false,
                 mode: "error_config",
-                statusMessage: `서버 통신 오류: ${err.message || "네트워크 연결 실패"}. 인터넷 연결 및 API 서버 상태를 확인해 주세요.`,
+                statusMessage: `알림톡 발송 중 오류: ${err.message || "네트워크 오류"}.`,
               }
             : null
         );
