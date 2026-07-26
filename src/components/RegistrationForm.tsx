@@ -138,6 +138,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       try {
         console.log(`📡 Sending registration Alimtalk for caregiver ${dataToSubmit.caregiverName}...`);
         const result = await sendRegistrationAlimtalk(dataToSubmit);
+        console.log("result:", result);
 
         const isSuccess = result.success === true || result.deliverySummary === "alimtalk_success" || result.deliverySummary === "sms_fallback_success";
 

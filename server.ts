@@ -83,7 +83,7 @@ const KAKAO_TEMPLATE_UJ_7390 = `가족간병 등록 접수 완료 안내
 문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
 
 // Real-time Aligo Alimtalk API proxy endpoint
-app.post("/api/send-alimtalk", async (req, res) => {
+app.post(["/api/send-alimtalk", "/send-alimtalk"], async (req, res) => {
   try {
     const {
       caregiverPhone,
@@ -299,7 +299,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
 });
 
 // Real-time Aligo SMS API proxy endpoint for Caregiver Contract
-app.post("/api/send-contract", async (req, res) => {
+app.post(["/api/send-contract", "/send-contract"], async (req, res) => {
   try {
     const {
       clientName,
