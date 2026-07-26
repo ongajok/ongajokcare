@@ -4,18 +4,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    let body = req.body;
-    if (!body || typeof body !== 'object') {
-      let rawData = '';
-      for await (const chunk of req) {
-        rawData += chunk;
-      }
-      try {
-        body = JSON.parse(rawData);
-      } catch (e) {
-        body = {};
-      }
-    }
+    const body = req.body || {};
 
     const receiver = body.receiver || body.phone || '';
     const message = body.message || '';
@@ -27,47 +16,35 @@ export default async function handler(req: any, res: any) {
     const sender = process.env.ALIGO_SENDER_PHONE;
 
     if (!apiKey || !userId || !senderKey || !sender) {
-      return res.status(400).json({ 
-        error: 'Vercel Environment Variables Missing' 
-      });
+      return res.status(400).json({ error: 'Vercel Environment Variables Missing' });
     }
 
-    const formData = new URLSearchParams();
-    formData.append('apikey', apiKey);
-    formData.append('userid', userId);
-    formData.append('senderkey', senderKey);
-    formData.append('tpl_code', templateCode);
-    formData.append('sender', sender);
-    formData.append('receiver', receiver);
-    formData.append('message', message);
+    const params = new URLSearchParams();
+    params.append('apikey', apiKey);
+    params.append('userid', userId);
+    params.append('senderkey', senderKey);
+    params.append('tpl_code', templateCode);
+    params.append('sender', sender);
+    params.append('receiver', receiver);
+    params.append('message', message);
 
     for (const [key, value] of Object.entries(body)) {
-      if (!['receiver', 'phone', 'message', 'tpl_code'].includes(key)) {
-        formData.append(key, String(value));
+      if (!['receiver', 'phone', 'message', 'tpl_code'].includes(key) && value != null) {
+        params.append(key, String(value));
       }
     }
 
-    // ★ 알리고 API 주소 끝의 슬래시 제거 및 정확한 경로 반영
-    const aligoRes = await fetch('https://kakaoapi.aligo.in/akv1/alimtalk/send', {
+    const aligoRes = await fetch('https://kakaoapi.aligo.in/akv1/alimtalk/send/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: formData.toString(),
+      body: params.toString(),
     });
 
-    const responseText = await aligoRes.text();
-    
-    try {
-      const jsonResult = JSON.parse(responseText);
-      return res.status(200).json({ result: jsonResult });
-    } catch (e) {
-      return res.status(500).json({ 
-        error: 'Aligo Rejected Request (HTML Response)', 
-        rawHtml: responseText 
-      });
-    }
+    const data = await aligoRes.json();
+    return res.status(200).json({ result: data });
   } catch (error: any) {
-    return res.status(500).json({ error: { code: '500', message: error.message } });
+    return res.status(500).json({ error: error.message });
   }
 }
