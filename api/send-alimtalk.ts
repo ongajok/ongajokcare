@@ -1,3 +1,4 @@
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -26,7 +27,6 @@ export default async function handler(req: any, res: any) {
     const senderKey = process.env.ALIGO_SENDER_KEY;
     const sender = process.env.ALIGO_SENDER_PHONE;
 
-    // 환경 변수가 빠졌는지 먼저 체크합니다
     if (!apiKey || !userId || !senderKey || !sender) {
       return res.status(400).json({ 
         error: 'Vercel Environment Variables Missing', 
@@ -49,14 +49,17 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    // ★ 헤더(Content-Type)를 추가하여 알리고가 정상 인식하도록 수정
     const aligoRes = await fetch('https://kakaoapi.aligo.in/akv1/alimtalk/send/', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
     });
 
     const responseText = await aligoRes.text();
     
-    // 알리고가 HTML 에러를 보내도 크래시 나지 않고 브라우저에 그대로 보여줍니다
     try {
       const jsonResult = JSON.parse(responseText);
       return res.status(200).json({ result: jsonResult });
