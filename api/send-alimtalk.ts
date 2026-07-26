@@ -4,7 +4,6 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Vercel 환경에서 body 데이터를 안전하게 읽어오는 코드
     let body = req.body;
     if (!body || typeof body !== 'object') {
       let rawData = '';
@@ -27,12 +26,20 @@ export default async function handler(req: any, res: any) {
     const senderKey = process.env.ALIGO_SENDER_KEY;
     const sender = process.env.ALIGO_SENDER_PHONE;
 
+    // 환경 변수가 빠졌는지 먼저 체크합니다
+    if (!apiKey || !userId || !senderKey || !sender) {
+      return res.status(400).json({ 
+        error: 'Vercel Environment Variables Missing', 
+        details: { hasApiKey: !!apiKey, hasUserId: !!userId, hasSenderKey: !!senderKey, hasSender: !!sender } 
+      });
+    }
+
     const formData = new URLSearchParams();
-    formData.append('apikey', apiKey || '');
-    formData.append('userid', userId || '');
-    formData.append('senderkey', senderKey || '');
+    formData.append('apikey', apiKey);
+    formData.append('userid', userId);
+    formData.append('senderkey', senderKey);
     formData.append('tpl_code', templateCode);
-    formData.append('sender', sender || '');
+    formData.append('sender', sender);
     formData.append('receiver', receiver);
     formData.append('message', message);
 
@@ -47,8 +54,18 @@ export default async function handler(req: any, res: any) {
       body: formData,
     });
 
-    const result = await aligoRes.json();
-    return res.status(200).json({ result });
+    const responseText = await aligoRes.text();
+    
+    // 알리고가 HTML 에러를 보내도 크래시 나지 않고 브라우저에 그대로 보여줍니다
+    try {
+      const jsonResult = JSON.parse(responseText);
+      return res.status(200).json({ result: jsonResult });
+    } catch (e) {
+      return res.status(500).json({ 
+        error: 'Aligo Rejected Request (HTML Response)', 
+        rawHtml: responseText 
+      });
+    }
   } catch (error: any) {
     return res.status(500).json({ error: { code: '500', message: error.message } });
   }
