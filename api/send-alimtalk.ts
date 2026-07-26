@@ -4,7 +4,20 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const body = req.body || {};
+    // Vercel 환경에서 body 데이터를 안전하게 읽어오는 코드
+    let body = req.body;
+    if (!body || typeof body !== 'object') {
+      let rawData = '';
+      for await (const chunk of req) {
+        rawData += chunk;
+      }
+      try {
+        body = JSON.parse(rawData);
+      } catch (e) {
+        body = {};
+      }
+    }
+
     const receiver = body.receiver || body.phone || '';
     const message = body.message || '';
     const templateCode = process.env.ALIGO_TEMPLATE_CODE || body.tpl_code || 'UJ_7390';
@@ -23,7 +36,6 @@ export default async function handler(req: any, res: any) {
     formData.append('receiver', receiver);
     formData.append('message', message);
 
-    // 전달받은 추가 데이터가 있다면 함께 전송
     for (const [key, value] of Object.entries(body)) {
       if (!['receiver', 'phone', 'message', 'tpl_code'].includes(key)) {
         formData.append(key, String(value));
