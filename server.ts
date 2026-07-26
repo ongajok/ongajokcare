@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { createServer as createViteServer } from "vite";
 
 // Load environment variables
 dotenv.config();
@@ -72,35 +71,8 @@ app.get("/api/debug-env", (req, res) => {
   });
 });
 
-// Kakao approved Alimtalk template (UJ_6650 - Main)
-const KAKAO_TEMPLATE_UJ_6650 = `가족간병 등록 접수 완료 안내
-안녕하세요.
-온가족간병협회입니다.
-기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
-
-"협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
-
-간병인: #{간병인명}님
-보호자: #{보호자명}님
-
-ℹ️ 문의사항은 고객센터(010-9520-7839)로 연락주세요.
-채널 추가하고 이 채널의 광고와 마케팅 메시지를 카카오톡으로 받기`;
-
-// Alternative without channel footer line if Kakao DB omits footer from message body
-const KAKAO_TEMPLATE_UJ_6650_NO_FOOTER = `가족간병 등록 접수 완료 안내
-안녕하세요.
-온가족간병협회입니다.
-기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
-
-"협회는 정상 접수된 신청에 대하여 접수일을 기준으로 등록 효력이 발생합니다." (협회 운영규정)
-
-간병인: #{간병인명}님
-보호자: #{보호자명}님
-
-ℹ️ 문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
-
-// Secondary Kakao approved Alimtalk template (UJ_5407)
-const KAKAO_TEMPLATE_UJ_5407 = `가족간병 등록 접수 완료 안내
+// Approved Kakao Alimtalk Template (UJ_7390)
+const KAKAO_TEMPLATE_UJ_7390 = `가족간병 등록 접수 완료 안내
 안녕하세요.
 온가족간병협회입니다.
 기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
@@ -110,28 +82,7 @@ const KAKAO_TEMPLATE_UJ_5407 = `가족간병 등록 접수 완료 안내
 
 문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
 
-/**
- * Validates that the final message matches the Kakao approved template structure.
- */
-function validateMessageAgainstTemplate(message: string): boolean {
-  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  
-  let pattern1 = escapeRegExp(KAKAO_TEMPLATE_UJ_6650)
-    .replace("#\\{간병인명\\}", "(.+)")
-    .replace("#\\{보호자명\\}", "(.+)");
-    
-  let pattern2 = escapeRegExp(KAKAO_TEMPLATE_UJ_6650_NO_FOOTER)
-    .replace("#\\{간병인명\\}", "(.+)")
-    .replace("#\\{보호자명\\}", "(.+)");
-
-  let pattern3 = escapeRegExp(KAKAO_TEMPLATE_UJ_5407)
-    .replace("#\\{간병인명\\}", "(.+)")
-    .replace("#\\{보호자명\\}", "(.+)");
-    
-  return new RegExp(`^${pattern1}$`).test(message) || new RegExp(`^${pattern2}$`).test(message) || new RegExp(`^${pattern3}$`).test(message);
-}
-
-// Real-time Aligo Alimtalk / SMS API proxy endpoint
+// Real-time Aligo Alimtalk API proxy endpoint
 app.post("/api/send-alimtalk", async (req, res) => {
   try {
     const {
@@ -140,35 +91,29 @@ app.post("/api/send-alimtalk", async (req, res) => {
       caregiverName,
       patientName,
       guardianName,
-      hospitalName,
-      admissionDate,
-      caregivingFee
     } = req.body;
 
-    if (!caregiverPhone || !guardianPhone || !caregiverName || !patientName) {
+    if (!caregiverPhone || !guardianPhone || !caregiverName) {
       return res.status(400).json({
         success: false,
-        message: "필수 정보(간병인 이름, 연락처, 보호자 연락처, 환자 이름)가 누락되었습니다."
+        message: "필수 정보(간병인 이름, 연락처, 보호자 연락처)가 누락되었습니다."
       });
     }
 
     const cName = caregiverName.trim();
     const gName = (guardianName || "미기재").trim();
 
-    // Primary message template (UJ_5407 as requested)
-    const msgUJ5407 = KAKAO_TEMPLATE_UJ_5407.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
-    const msgUJ6650Full = KAKAO_TEMPLATE_UJ_6650.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
-    const msgUJ6650NoFooter = KAKAO_TEMPLATE_UJ_6650_NO_FOOTER.replace("#{간병인명}", cName).replace("#{보호자명}", gName);
+    // Template body substitution for UJ_7390
+    const msg = KAKAO_TEMPLATE_UJ_7390
+      .replace("#{간병인명}", cName)
+      .replace("#{보호자명}", gName);
 
-    // Primary message content defaults to UJ_5407
-    const msg = msgUJ5407;
-
-    // Credentials strictly updated per user specification
-    let apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
-    let userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
-    let senderKey = getEnvVal("ALIGO_SENDER_KEY", "90393b608b562a491a73e74e7e5331b8b41ba0e0");
-    let senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
-    let primaryTplCode = getEnvVal("ALIGO_TEMPLATE_CODE", "UJ_5407");
+    // Operational credentials per user specification
+    const apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
+    const userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
+    const senderKey = getEnvVal("ALIGO_SENDER_KEY", "90393b608b562a491a73e74e7e5331b8b41ba0e0");
+    const senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
+    const tplCode = "UJ_7390";
 
     const recipients = [
       { phone: caregiverPhone, role: "간병인" },
@@ -180,19 +125,17 @@ app.post("/api/send-alimtalk", async (req, res) => {
     console.log(`📡 [Aligo API Dispatch Request]`);
     console.log(`- API User ID: ${userId}`);
     console.log(`- Sender Phone: ${senderPhone}`);
-    console.log(`- Primary Template Code: ${primaryTplCode}`);
+    console.log(`- Template Code: ${tplCode}`);
     console.log("=========================================");
 
-    // Helper for Direct LMS/SMS Fallback via https://apis.aligo.in/send/
+    // Helper for Direct LMS Fallback via https://apis.aligo.in/send/
     const sendAligoSmsDirect = async (receiverNum: string, titleText: string, messageBody: string) => {
       const formattedReceiver = receiverNum.replace(/[^0-9]/g, "");
       const formattedSender = senderPhone.replace(/[^0-9]/g, "");
 
       const smsParams = new URLSearchParams();
       smsParams.append("key", apiKey);
-      smsParams.append("apikey", apiKey);
       smsParams.append("user_id", userId);
-      smsParams.append("userid", userId);
       smsParams.append("sender", formattedSender);
       smsParams.append("receiver", formattedReceiver);
       smsParams.append("title", titleText);
@@ -227,7 +170,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
       const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
       const formattedSender = senderPhone.replace(/[^0-9]/g, "");
 
-      const executeAlimtalkSend = async (tplCode: string, messageBody: string) => {
+      try {
         const params = new URLSearchParams();
         params.append("apikey", apiKey);
         params.append("userid", userId);
@@ -236,13 +179,11 @@ app.post("/api/send-alimtalk", async (req, res) => {
         params.append("sender", formattedSender);
         params.append("receiver_1", formattedReceiver);
         params.append("subject_1", "[가족간병 등록 접수 완료]");
-        params.append("message_1", messageBody);
-        
-        // Aligo Failover settings (Auto LMS fallback from Aligo server side)
+        params.append("message_1", msg);
         params.append("failover", "Y");
         params.append("fsender", formattedSender);
         params.append("fsubject_1", "[가족간병 등록 접수 완료]");
-        params.append("fmessage_1", messageBody);
+        params.append("fmessage_1", msg);
 
         console.log(`\n📤 [Aligo Alimtalk Request] Target: ${recipient.role} (${formattedReceiver}) | Template: ${tplCode}`);
 
@@ -258,64 +199,32 @@ app.post("/api/send-alimtalk", async (req, res) => {
         console.log(`📥 [Aligo Alimtalk Response Raw for ${recipient.role}]: HTTP ${status}`);
         console.log(JSON.stringify(resultJson, null, 2));
 
-        const isOk = resultJson && (
-          resultJson.code === 0 || 
-          resultJson.code === "0" || 
-          resultJson.result_code === "1" || 
-          resultJson.result_code === 1
-        );
+        const isAlimtalkOk = resultJson && (resultJson.code === 0 || resultJson.code === "0");
 
-        return { status, resultJson, tplCode, messageBody, isSuccess: isOk };
-      };
-
-      try {
-        // Attempt 1: UJ_5407 primary approved template
-        let alimtalkRes = await executeAlimtalkSend("UJ_5407", msgUJ5407);
-
-        // If template error, retry UJ_6650
-        const isTemplateError = alimtalkRes.resultJson && (
-          alimtalkRes.resultJson.code === -3008 || 
-          alimtalkRes.resultJson.code === -3010 || 
-          alimtalkRes.resultJson.code === -3011 ||
-          (alimtalkRes.resultJson.message && (alimtalkRes.resultJson.message.includes("템플릿") || alimtalkRes.resultJson.message.includes("일치")))
-        );
-
-        if (!alimtalkRes.isSuccess && isTemplateError) {
-          console.warn(`⚠️ [Template Reject Retry 1] Retrying UJ_6650 for ${recipient.role}...`);
-          alimtalkRes = await executeAlimtalkSend("UJ_6650", msgUJ6650Full);
-        }
-
-        if (!alimtalkRes.isSuccess && isTemplateError) {
-          console.warn(`⚠️ [Template Reject Retry 2] Retrying UJ_6650 without footer for ${recipient.role}...`);
-          alimtalkRes = await executeAlimtalkSend("UJ_6650", msgUJ6650NoFooter);
-        }
-
-        let smsResult = null;
         let deliveryStatus: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
+        let smsResult = null;
         let failureReason = "";
 
-        if (alimtalkRes.isSuccess) {
+        if (isAlimtalkOk) {
           deliveryStatus = "alimtalk_success";
         } else {
-          // REQUIREMENT: If Alimtalk fails -> Immediate Direct LMS/SMS Fallback
-          console.warn(`🚨 [Kakao Alimtalk Reject/Failure for ${recipient.role} (${formattedReceiver})] Code: ${alimtalkRes.resultJson?.code}, Message: ${alimtalkRes.resultJson?.message}`);
-          console.warn(`🔄 [Immediate Direct LMS Fallback Initiated via https://apis.aligo.in/send/...]`);
+          console.warn(`🚨 [Kakao Alimtalk Reject/Failure for ${recipient.role} (${formattedReceiver})] Code: ${resultJson?.code}, Message: ${resultJson?.message}`);
+          console.warn(`🔄 [Direct LMS Fallback Initiated via https://apis.aligo.in/send/...]`);
           
           smsResult = await sendAligoSmsDirect(
             formattedReceiver,
             "[가족간병 등록 접수 완료]",
-            msgUJ5407
+            msg
           );
 
           if (smsResult.isSuccess) {
-            console.log(`✅ [LMS Fallback Success for ${recipient.role} (${formattedReceiver})] msg_id: ${smsResult.data?.msg_id}`);
+            console.log(`✅ [LMS Fallback Success for ${recipient.role} (${formattedReceiver})]`);
             deliveryStatus = "sms_fallback_success";
           } else {
-            console.error(`❌ [LMS Fallback Failed for ${recipient.role} (${formattedReceiver})] code: ${smsResult.data?.result_code || smsResult.data?.code}, msg: ${smsResult.data?.message}`);
+            console.error(`❌ [LMS Fallback Failed for ${recipient.role} (${formattedReceiver})]`);
             deliveryStatus = "all_failed";
-            
-            const aligoErrCode = smsResult.data?.result_code || smsResult.data?.code || alimtalkRes.resultJson?.code;
-            const aligoErrMsg = smsResult.data?.message || alimtalkRes.resultJson?.message || "알리고 API 통신 오류";
+            const aligoErrCode = smsResult.data?.result_code || smsResult.data?.code || resultJson?.code;
+            const aligoErrMsg = smsResult.data?.message || resultJson?.message || "알리고 API 통신 오류";
             failureReason = `[오류코드: ${aligoErrCode}] ${aligoErrMsg}`;
           }
         }
@@ -324,19 +233,18 @@ app.post("/api/send-alimtalk", async (req, res) => {
           phone: recipient.phone,
           role: recipient.role,
           deliveryStatus,
-          alimtalkSuccess: alimtalkRes.isSuccess,
-          alimtalkData: alimtalkRes.resultJson,
+          alimtalkSuccess: isAlimtalkOk,
+          alimtalkData: resultJson,
           smsFallbackSuccess: smsResult ? smsResult.isSuccess : false,
           smsData: smsResult ? smsResult.data : null,
-          templateUsed: alimtalkRes.tplCode,
+          templateUsed: tplCode,
           failureReason
         });
 
       } catch (err: any) {
         console.error(`❌ Dispatch Exception for ${recipient.role}:`, err.message);
         
-        // Emergency LMS direct
-        const emergencySms = await sendAligoSmsDirect(formattedReceiver, "[가족간병 등록 접수 완료]", msgUJ5407);
+        const emergencySms = await sendAligoSmsDirect(formattedReceiver, "[가족간병 등록 접수 완료]", msg);
         
         results.push({
           phone: recipient.phone,
@@ -353,7 +261,6 @@ app.post("/api/send-alimtalk", async (req, res) => {
     }
 
     const allAlimtalkSuccess = results.every(r => r.deliveryStatus === "alimtalk_success");
-    const anySmsSuccess = results.some(r => r.deliveryStatus === "sms_fallback_success");
     const anySuccess = results.some(r => r.deliveryStatus === "alimtalk_success" || r.deliveryStatus === "sms_fallback_success");
 
     let overallSummary: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
@@ -376,7 +283,7 @@ app.post("/api/send-alimtalk", async (req, res) => {
       mode: "live",
       deliverySummary: overallSummary,
       message: displayMessage,
-      templateUsed: primaryTplCode,
+      templateUsed: tplCode,
       recipients: results,
       msg
     });
@@ -536,6 +443,7 @@ export default app;
 // Configure Vite or Static Assets serving
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
