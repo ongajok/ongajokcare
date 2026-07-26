@@ -121,6 +121,21 @@ app.post(["/api/send-alimtalk", "/send-alimtalk"], async (req, res) => {
       { phone: "010-9520-7839", role: "협회 고객센터" }
     ];
 
+    // Detailed Info LMS message content containing both names and phone numbers
+    const pName = (patientName || "미기재").trim();
+    const detailedLmsMsg = `[온가족간병협회] 가족간병 등록 상세 안내
+
+안녕하세요. 온가족간병협회입니다.
+가족간병 등록 신청이 정상 접수되었습니다.
+
+[접수 정보 및 연락처]
+• 간병인: ${cName} (${caregiverPhone})
+• 보호자: ${gName} (${guardianPhone})
+• 환자명: ${pName}
+
+※ 원활한 간병 진행을 위해 보호자와 간병인 서로의 성명 및 연락처가 수신됩니다.
+문의: 온가족간병협회 고객센터 (010-9520-7839)`;
+
     console.log("=========================================");
     console.log(`📡 [Aligo API Dispatch Request]`);
     console.log(`- API User ID: ${userId}`);
@@ -207,21 +222,29 @@ app.post(["/api/send-alimtalk", "/send-alimtalk"], async (req, res) => {
 
         if (isAlimtalkOk) {
           deliveryStatus = "alimtalk_success";
+          console.log(`✅ [Alimtalk Sent] Sending additional Detailed Info LMS with Phone Numbers to ${recipient.role} (${formattedReceiver})...`);
+          
+          // Send additional Detailed LMS containing both caregiver & guardian phone numbers
+          smsResult = await sendAligoSmsDirect(
+            formattedReceiver,
+            "[온가족간병협회] 가족간병 등록 상세 안내",
+            detailedLmsMsg
+          );
         } else {
           console.warn(`🚨 [Kakao Alimtalk Reject/Failure for ${recipient.role} (${formattedReceiver})] Code: ${resultJson?.code}, Message: ${resultJson?.message}`);
-          console.warn(`🔄 [Direct LMS Fallback Initiated via https://apis.aligo.in/send/...]`);
+          console.warn(`🔄 [Direct LMS Fallback Initiated with Detailed Info via https://apis.aligo.in/send/...]`);
           
           smsResult = await sendAligoSmsDirect(
             formattedReceiver,
-            "[가족간병 등록 접수 완료]",
-            msg
+            "[온가족간병협회] 가족간병 등록 상세 안내",
+            detailedLmsMsg
           );
 
           if (smsResult.isSuccess) {
-            console.log(`✅ [LMS Fallback Success for ${recipient.role} (${formattedReceiver})]`);
+            console.log(`✅ [LMS Direct Success for ${recipient.role} (${formattedReceiver})]`);
             deliveryStatus = "sms_fallback_success";
           } else {
-            console.error(`❌ [LMS Fallback Failed for ${recipient.role} (${formattedReceiver})]`);
+            console.error(`❌ [LMS Direct Failed for ${recipient.role} (${formattedReceiver})]`);
             deliveryStatus = "all_failed";
             const aligoErrCode = smsResult.data?.result_code || smsResult.data?.code || resultJson?.code;
             const aligoErrMsg = smsResult.data?.message || resultJson?.message || "알리고 API 통신 오류";

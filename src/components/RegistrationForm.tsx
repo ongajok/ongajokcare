@@ -611,7 +611,10 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
           </div>
 
           {/* Core Submit Button (Sleek Theme style) */}
-          <div className="pt-6 text-center">
+          <div className="pt-6 text-center space-y-3">
+            <p className="text-center text-xs text-slate-500 font-semibold tracking-tight">
+              (신청 완료 후 원활한 간병 진행을 위해 보호자와 간병인에게 서로의 성명 및 연락처가 안내됩니다.)
+            </p>
             <motion.button
               type="submit"
               whileHover={{ scale: 1.03, y: -2 }}
@@ -696,8 +699,8 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                     </p>
                   </div>
 
-                  <p className="text-[10px] text-slate-400 leading-snug font-bold">
-                    * 위 수신 고지는 간병인 연락처({notificationModal.caregiverPhone}), 보호자 연락처({notificationModal.guardianPhone}), 그리고 협회 고객센터(010-9520-7839)로 실시간 동시 전송되었습니다.
+                  <p className="text-[10px] text-slate-500 leading-snug font-bold">
+                    * 알림톡과 함께 상세 연락처가 포함된 안내 문자(LMS)가 간병인({notificationModal.caregiverPhone}), 보호자({notificationModal.guardianPhone}), 협회 고객센터(010-9520-7839)로 실시간 동시 발송되었습니다.
                   </p>
 
                   {notificationModal.isSending ? (
