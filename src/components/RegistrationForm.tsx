@@ -4,7 +4,7 @@ import { ShieldAlert, CheckCircle2, Send, MessageCircle, AlertCircle, X, Check, 
 import { CaregiverRegistration, WebsiteConfig } from "../types";
 import { KOREAN_INSURANCE_COMPANIES } from "../data";
 import MascotOni from "./MascotOni";
-import { sendRegistrationAlimtalk } from "../lib/aligoClient";
+import { sendRegistrationSMS } from "../lib/solapiClient";
 
 interface RegistrationFormProps {
   config: WebsiteConfig;
@@ -44,7 +44,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
     guardianName: string;
     isSending: boolean;
     mode?: string;
-    deliverySummary?: "alimtalk_success" | "sms_fallback_success" | "all_failed";
+    deliverySummary?: "sms_success" | "all_failed";
     statusMessage?: string;
     receivedAt?: string;
   } | null>(null);
@@ -133,14 +133,14 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
       privacyPolicy: false,
     });
 
-    // Trigger Aligo Alimtalk / SMS (using smart dual-tier dispatch)
+    // Trigger Solapi LMS (3 recipients: caregiver, guardian, association)
     (async () => {
       try {
-        console.log(`📡 Sending registration Alimtalk for caregiver ${dataToSubmit.caregiverName}...`);
-        const result = await sendRegistrationAlimtalk(dataToSubmit);
-        console.log("result:", result);
+        console.log(`📡 Sending registration Solapi LMS for caregiver ${dataToSubmit.caregiverName}...`);
+        const result = await sendRegistrationSMS(dataToSubmit);
+        console.log("Solapi result:", result);
 
-        const isSuccess = result.success === true || result.deliverySummary === "alimtalk_success" || result.deliverySummary === "sms_fallback_success";
+        const isSuccess = result.success === true || result.deliverySummary === "sms_success";
 
         setNotificationModal((prev) =>
           prev
@@ -148,13 +148,13 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 ...prev,
                 isSending: false,
                 mode: result.mode || (isSuccess ? "live" : "error_config"),
-                deliverySummary: result.deliverySummary || (isSuccess ? "alimtalk_success" : "all_failed"),
-                statusMessage: result.message || (isSuccess ? "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다." : "알림톡 발송 실패"),
+                deliverySummary: result.deliverySummary || (isSuccess ? "sms_success" : "all_failed"),
+                statusMessage: result.message || (isSuccess ? "가족간병 등록 접수가 완료되었습니다.\n안내 문자가 정상 발송되었습니다." : "문자 발송 실패"),
               }
             : null
         );
       } catch (err: any) {
-        console.error("Aligo API send error:", err);
+        console.error("Solapi API send error:", err);
         setNotificationModal((prev) =>
           prev
             ? {
@@ -162,7 +162,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                 isSending: false,
                 mode: "error_config",
                 deliverySummary: "all_failed",
-                statusMessage: `알림톡/문자 발송 중 오류: ${err.message || "네트워크 오류"}.`,
+                statusMessage: `문자 발송 중 오류: ${err.message || "네트워크 오류"}.`,
               }
             : null
         );
@@ -628,7 +628,7 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
         </form>
       </motion.div>
 
-      {/* KAKAOTALK ALIMTALK SIMULATION MODAL */}
+      {/* SOLAPI LMS SMS NOTIFICATION MODAL */}
       <AnimatePresence>
         {notificationModal && notificationModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -641,22 +641,22 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
-            {/* Kakao Alimtalk Container (Bouncy Scale Entrance) */}
+            {/* Solapi SMS Modal Container */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="relative w-full max-w-sm bg-[#FFEB3B] rounded-3xl overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border-4 border-yellow-400"
+              className="relative w-full max-w-sm bg-[#1e3a8a] rounded-3xl overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border-4 border-blue-600"
             >
               {/* Header */}
-              <div className="bg-[#372a24] text-white px-5 py-4 flex items-center justify-between">
+              <div className="bg-[#1e3a8a] text-white px-5 py-4 flex items-center justify-between border-b border-blue-500/30">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-[#FFEB3B] flex items-center justify-center text-[#372a24]">
-                    <MessageCircle className="w-4 h-4 fill-[#372a24]" />
+                  <div className="w-6 h-6 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                    <MessageCircle className="w-4 h-4 fill-white" />
                   </div>
                   <span className="text-xs font-black tracking-wide">
-                    {notificationModal?.deliverySummary === "sms_fallback_success" ? "문자(LMS) 발송 완료" : "알림톡 / 문자 발송"}
+                    솔라피 안내 문자(LMS) 발송
                   </span>
                 </div>
                 <button
@@ -700,20 +700,18 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                   </div>
 
                   <p className="text-[10px] text-slate-500 leading-snug font-bold">
-                    * 알림톡과 함께 상세 연락처가 포함된 안내 문자(LMS)가 간병인({notificationModal.caregiverPhone}), 보호자({notificationModal.guardianPhone}), 협회 고객센터(010-9520-7839)로 실시간 동시 발송되었습니다.
+                    * 접수 상세 정보가 담긴 안내 문자(LMS)가 간병인({notificationModal.caregiverPhone}), 보호자({notificationModal.guardianPhone}), 협회 고객센터(010-9520-7839)로 실시간 동시 발송되었습니다.
                   </p>
 
                   {notificationModal.isSending ? (
                     <div className="flex items-center gap-2 justify-center py-2 text-[10px] text-indigo-600 font-extrabold bg-indigo-50/50 rounded-xl border border-dashed border-indigo-200 animate-pulse">
                       <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-                      실시간 알리고 알림톡 전송 처리 중...
+                      실시간 솔라피 LMS 문자 전송 처리 중...
                     </div>
                   ) : (
                     <div className={`text-[11px] p-3 rounded-xl border font-bold flex flex-col gap-1.5 whitespace-pre-wrap ${
                       notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config"
                         ? "bg-rose-50 text-rose-800 border-rose-200"
-                        : notificationModal.deliverySummary === "sms_fallback_success"
-                        ? "bg-blue-50 text-blue-900 border-blue-200"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
                       <p className="flex items-center gap-1.5 text-xs font-black">
@@ -723,18 +721,16 @@ export default function RegistrationForm({ config, onRegisterSubmit, onOpenLegal
                           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                         )}
                         <span>
-                          {notificationModal.deliverySummary === "alimtalk_success"
-                            ? "알림톡 발송 성공"
-                            : notificationModal.deliverySummary === "sms_fallback_success"
-                            ? "대체 문자(LMS) 발송 성공"
-                            : "알림톡 발송 실패"}
+                          {(notificationModal.deliverySummary === "all_failed" || notificationModal.mode === "error_config")
+                            ? "문자 발송 실패"
+                            : "안내 문자(LMS) 발송 성공"}
                         </span>
                       </p>
                       <p className="text-[10px] font-medium leading-relaxed pl-5 text-slate-700">
                         {notificationModal.statusMessage || (
-                          notificationModal.deliverySummary === "alimtalk_success"
-                            ? "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다."
-                            : "알림톡 발송 실패:\n(알리고 API 연동 오류)"
+                          notificationModal.deliverySummary === "all_failed"
+                            ? "문자 발송 실패:\n(솔라피 API 연동 상태 확인 필요)"
+                            : "가족간병 등록 접수가 완료되었습니다.\n안내 문자가 정상 발송되었습니다."
                         )}
                       </p>
                     </div>

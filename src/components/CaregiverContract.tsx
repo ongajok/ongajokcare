@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { FileText, ArrowLeft, Printer, CheckCircle2, User, Phone, MapPin, DollarSign, PenTool, Check, AlertTriangle, Sparkles, MessageCircle, X } from "lucide-react";
 import { CaregiverRegistration } from "../types";
-import { sendContractSMS } from "../lib/aligoClient";
+import { sendContractSMS } from "../lib/solapiClient";
 
 interface CaregiverContractProps {
   onBack: () => void;
@@ -252,10 +252,10 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
       mode: "simulated"
     });
 
-    // Trigger Aligo Contract SMS
+    // Trigger Solapi Contract SMS
     (async () => {
       try {
-        console.log(`📡 Sending contract SMS for caregiver ${dataToSubmit.caregiverName}...`);
+        console.log(`📡 Sending contract Solapi SMS for caregiver ${dataToSubmit.caregiverName}...`);
         const result = await sendContractSMS(dataToSubmit);
 
         setContractNotification((prev) =>
@@ -271,7 +271,7 @@ export default function CaregiverContract({ onBack, phone }: CaregiverContractPr
             : null
         );
       } catch (err: any) {
-        console.error("Aligo SMS send error:", err);
+        console.error("Solapi SMS send error:", err);
         setContractNotification((prev) =>
           prev
             ? {

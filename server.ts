@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +41,89 @@ function getEnvVal(key: string, fallback: string): string {
   return val.trim();
 }
 
-// Health check endpoint (placed early to guarantee immediate 200 OK)
+// Solapi REST API v4 Authentication Header Generator
+function generateSolapiAuthHeader(apiKey: string, apiSecret: string): string {
+  const date = new Date().toISOString();
+  const salt = crypto.randomBytes(16).toString("hex");
+  const signature = crypto
+    .createHmac("sha256", apiSecret)
+    .update(date + salt)
+    .digest("hex");
+
+  return `HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
+}
+
+// Core helper to dispatch messages via Solapi REST API v4
+async function sendSolapiMessages(messages: Array<{ to: string; from: string; text: string; subject?: string; type?: string }>) {
+  const apiKey = getEnvVal("SOLAPI_API_KEY", "");
+  const apiSecret = getEnvVal("SOLAPI_API_SECRET", "");
+
+  console.log("🔍 [Solapi Environment Check]:", {
+    SOLAPI_API_KEY: apiKey ? `설정됨 (${apiKey.substring(0, 4)}...)` : "❌ 미설정 (process.env.SOLAPI_API_KEY 가 비어있거나 undefined)",
+    SOLAPI_API_SECRET: apiSecret ? `설정됨 (${apiSecret.substring(0, 4)}...)` : "❌ 미설정 (process.env.SOLAPI_API_SECRET 이 비어있거나 undefined)",
+    SOLAPI_SENDER_PHONE: getEnvVal("SOLAPI_SENDER_PHONE", "01095207839")
+  });
+
+  if (!apiKey || !apiSecret) {
+    const missingKeys = [];
+    if (!apiKey) missingKeys.push("SOLAPI_API_KEY");
+    if (!apiSecret) missingKeys.push("SOLAPI_API_SECRET");
+
+    console.error(`❌ [Solapi 오류] 환경변수를 읽을 수 없습니다: ${missingKeys.join(", ")}`);
+    console.error("💡 AI Studio 좌측/상단 메뉴의 [Settings(설정) -> Environment Variables / Secrets] 메뉴에서 SOLAPI_API_KEY 와 SOLAPI_API_SECRET 을 등록해 주세요.");
+
+    return {
+      success: false,
+      status: 401,
+      message: `[환경변수 오류] ${missingKeys.join(", ")} 환경변수가 설정되지 않았습니다. AI Studio 설정(Settings) 메뉴에서 환경변수를 입력해 주세요.`,
+      data: null
+    };
+  }
+
+  const authHeader = generateSolapiAuthHeader(apiKey, apiSecret);
+
+  try {
+    const response = await fetch("https://api.solapi.com/messages/v4/send-many", {
+      method: "POST",
+      headers: {
+        "Authorization": authHeader,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ messages })
+    });
+
+    const status = response.status;
+    const resData: any = await response.json();
+    console.log(`📥 [Solapi API Response status: ${status}]:`, JSON.stringify(resData, null, 2));
+
+    if (status >= 200 && status < 300) {
+      return {
+        success: true,
+        status,
+        message: "솔라피 안내 문자(LMS) 발송 성공",
+        data: resData
+      };
+    } else {
+      const errMsg = resData?.errorMessage || resData?.message || `솔라피 API 오류 (HTTP ${status})`;
+      return {
+        success: false,
+        status,
+        message: `[솔라피 오류] ${errMsg}`,
+        data: resData
+      };
+    }
+  } catch (err: any) {
+    console.error("❌ [Solapi API Network Exception]:", err.message);
+    return {
+      success: false,
+      status: 500,
+      message: `솔라피 통신 오류: ${err.message}`,
+      data: null
+    };
+  }
+}
+
+// Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -50,14 +133,14 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Debug route to safely verify environment variables on the running server
+// Debug route to safely verify Solapi environment variables on running server
 app.get("/api/debug-env", (req, res) => {
   const envKeys = Object.keys(process.env);
-  const aligoEnv: Record<string, any> = {};
+  const solapiEnv: Record<string, any> = {};
   for (const key of envKeys) {
-    if (key.startsWith("ALIGO_") || key === "PORT" || key === "NODE_ENV") {
+    if (key.startsWith("SOLAPI_") || key === "PORT" || key === "NODE_ENV") {
       const val = process.env[key];
-      aligoEnv[key] = {
+      solapiEnv[key] = {
         exists: !!val,
         length: val ? val.length : 0,
         masked: val ? (val.length > 4 ? `${val.substring(0, 2)}...${val.substring(val.length - 2)}` : "***") : null
@@ -67,23 +150,12 @@ app.get("/api/debug-env", (req, res) => {
   res.json({
     status: "ok",
     node_env: process.env.NODE_ENV,
-    aligoEnv
+    solapiEnv
   });
 });
 
-// Approved Kakao Alimtalk Template (UJ_7390)
-const KAKAO_TEMPLATE_UJ_7390 = `가족간병 등록 접수 완료 안내
-안녕하세요.
-온가족간병협회입니다.
-기재해 주신 정보가 협회 시스템에 안전하게 접수되었습니다.
-
-간병인: #{간병인명}님
-보호자: #{보호자명}님
-
-문의사항은 고객센터(010-9520-7839)로 연락주세요.`;
-
-// Real-time Aligo Alimtalk API proxy endpoint
-app.post(["/api/send-alimtalk", "/send-alimtalk"], async (req, res) => {
+// Real-time Solapi Direct SMS/LMS API proxy endpoint for Family Caregiver Registration
+app.post(["/api/send-alimtalk", "/send-alimtalk", "/api/send-sms", "/send-sms"], async (req, res) => {
   try {
     const {
       caregiverPhone,
@@ -102,226 +174,71 @@ app.post(["/api/send-alimtalk", "/send-alimtalk"], async (req, res) => {
 
     const cName = caregiverName.trim();
     const gName = (guardianName || "미기재").trim();
+    const pName = (patientName || "미기재").trim();
 
-    // Template body substitution for UJ_7390
-    const msg = KAKAO_TEMPLATE_UJ_7390
-      .replace("#{간병인명}", cName)
-      .replace("#{보호자명}", gName);
+    const senderPhone = getEnvVal("SOLAPI_SENDER_PHONE", "01095207839").replace(/[^0-9]/g, "");
 
-    // Operational credentials per user specification
-    const apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
-    const userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
-    const senderKey = getEnvVal("ALIGO_SENDER_KEY", "90393b608b562a491a73e74e7e5331b8b41ba0e0");
-    const senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
-    const tplCode = "UJ_7390";
-
+    // 3 Recipients: ① Caregiver, ② Guardian, ③ Association Customer Center (010-9520-7839)
     const recipients = [
       { phone: caregiverPhone, role: "간병인" },
       { phone: guardianPhone, role: "보호자" },
       { phone: "010-9520-7839", role: "협회 고객센터" }
     ];
 
-    // Detailed Info LMS message content containing both names and phone numbers
-    const pName = (patientName || "미기재").trim();
+    // Detailed Info LMS message content containing patient name, caregiver name & phone, guardian name & phone
     const detailedLmsMsg = `[온가족간병협회] 가족간병 등록 상세 안내
 
 안녕하세요. 온가족간병협회입니다.
 가족간병 등록 신청이 정상 접수되었습니다.
 
-[접수 정보 및 연락처]
+[접수 정보 및 상세 연락처]
+• 환자명: ${pName}
 • 간병인: ${cName} (${caregiverPhone})
 • 보호자: ${gName} (${guardianPhone})
-• 환자명: ${pName}
 
-※ 원활한 간병 진행을 위해 보호자와 간병인 서로의 성명 및 연락처가 수신됩니다.
+※ 원활한 간병 진행을 위해 보호자와 간병인 서로의 성명 및 연락처가 안내됩니다.
 문의: 온가족간병협회 고객센터 (010-9520-7839)`;
 
     console.log("=========================================");
-    console.log(`📡 [Aligo API Dispatch Request]`);
-    console.log(`- API User ID: ${userId}`);
+    console.log(`📡 [Solapi LMS Dispatch Request]`);
     console.log(`- Sender Phone: ${senderPhone}`);
-    console.log(`- Template Code: ${tplCode}`);
+    console.log(`- Recipients count: ${recipients.length}`);
     console.log("=========================================");
 
-    // Helper for Direct LMS Fallback via https://apis.aligo.in/send/
-    const sendAligoSmsDirect = async (receiverNum: string, titleText: string, messageBody: string) => {
-      const formattedReceiver = receiverNum.replace(/[^0-9]/g, "");
-      const formattedSender = senderPhone.replace(/[^0-9]/g, "");
+    const solapiMessages = recipients.map(r => ({
+      to: r.phone.replace(/[^0-9]/g, ""),
+      from: senderPhone,
+      subject: "[온가족간병협회] 가족간병 등록 상세 안내",
+      text: detailedLmsMsg,
+      type: "LMS"
+    }));
 
-      const smsParams = new URLSearchParams();
-      smsParams.append("key", apiKey);
-      smsParams.append("user_id", userId);
-      smsParams.append("sender", formattedSender);
-      smsParams.append("receiver", formattedReceiver);
-      smsParams.append("title", titleText);
-      smsParams.append("msg", messageBody);
-      smsParams.append("msg_type", "LMS");
+    const result = await sendSolapiMessages(solapiMessages);
 
-      console.log(`📱 [LMS Direct Fallback Dispatch] Target: ${formattedReceiver} | Sender: ${formattedSender}`);
-      
-      try {
-        const smsRes = await fetch("https://apis.aligo.in/send/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: smsParams.toString()
-        });
-        const smsJson: any = await smsRes.json();
-        console.log(`📥 [LMS Fallback Raw Response JSON for ${formattedReceiver}]:`, JSON.stringify(smsJson, null, 2));
-        const isSmsOk = smsJson && (
-          smsJson.result_code === "1" || 
-          smsJson.result_code === 1 ||
-          smsJson.code === 0 ||
-          smsJson.code === "0"
-        );
-        return { isSuccess: isSmsOk, data: smsJson, status: smsRes.status };
-      } catch (smsErr: any) {
-        console.error(`❌ [LMS Direct Fallback Network Exception]:`, smsErr.message);
-        return { isSuccess: false, data: { error: smsErr.message, message: smsErr.message }, status: 500 };
-      }
-    };
-
-    const results = [];
-    for (const recipient of recipients) {
-      const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
-      const formattedSender = senderPhone.replace(/[^0-9]/g, "");
-
-      try {
-        const params = new URLSearchParams();
-        params.append("apikey", apiKey);
-        params.append("userid", userId);
-        params.append("senderkey", senderKey);
-        params.append("tpl_code", tplCode);
-        params.append("sender", formattedSender);
-        params.append("receiver_1", formattedReceiver);
-        params.append("subject_1", "[가족간병 등록 접수 완료]");
-        params.append("message_1", msg);
-        params.append("failover", "Y");
-        params.append("fsender", formattedSender);
-        params.append("fsubject_1", "[가족간병 등록 접수 완료]");
-        params.append("fmessage_1", msg);
-
-        console.log(`\n📤 [Aligo Alimtalk Request] Target: ${recipient.role} (${formattedReceiver}) | Template: ${tplCode}`);
-
-        const response = await fetch("https://kakaoapi.aligo.in/akv10/alimtalk/send/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: params.toString()
-        });
-
-        const status = response.status;
-        const resultJson: any = await response.json();
-
-        console.log(`📥 [Aligo Alimtalk Response Raw for ${recipient.role}]: HTTP ${status}`);
-        console.log(JSON.stringify(resultJson, null, 2));
-
-        const isAlimtalkOk = resultJson && (resultJson.code === 0 || resultJson.code === "0");
-
-        let deliveryStatus: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
-        let smsResult = null;
-        let failureReason = "";
-
-        if (isAlimtalkOk) {
-          deliveryStatus = "alimtalk_success";
-          console.log(`✅ [Alimtalk Sent] Sending additional Detailed Info LMS with Phone Numbers to ${recipient.role} (${formattedReceiver})...`);
-          
-          // Send additional Detailed LMS containing both caregiver & guardian phone numbers
-          smsResult = await sendAligoSmsDirect(
-            formattedReceiver,
-            "[온가족간병협회] 가족간병 등록 상세 안내",
-            detailedLmsMsg
-          );
-        } else {
-          console.warn(`🚨 [Kakao Alimtalk Reject/Failure for ${recipient.role} (${formattedReceiver})] Code: ${resultJson?.code}, Message: ${resultJson?.message}`);
-          console.warn(`🔄 [Direct LMS Fallback Initiated with Detailed Info via https://apis.aligo.in/send/...]`);
-          
-          smsResult = await sendAligoSmsDirect(
-            formattedReceiver,
-            "[온가족간병협회] 가족간병 등록 상세 안내",
-            detailedLmsMsg
-          );
-
-          if (smsResult.isSuccess) {
-            console.log(`✅ [LMS Direct Success for ${recipient.role} (${formattedReceiver})]`);
-            deliveryStatus = "sms_fallback_success";
-          } else {
-            console.error(`❌ [LMS Direct Failed for ${recipient.role} (${formattedReceiver})]`);
-            deliveryStatus = "all_failed";
-            const aligoErrCode = smsResult.data?.result_code || smsResult.data?.code || resultJson?.code;
-            const aligoErrMsg = smsResult.data?.message || resultJson?.message || "알리고 API 통신 오류";
-            failureReason = `[오류코드: ${aligoErrCode}] ${aligoErrMsg}`;
-          }
-        }
-
-        results.push({
-          phone: recipient.phone,
-          role: recipient.role,
-          deliveryStatus,
-          alimtalkSuccess: isAlimtalkOk,
-          alimtalkData: resultJson,
-          smsFallbackSuccess: smsResult ? smsResult.isSuccess : false,
-          smsData: smsResult ? smsResult.data : null,
-          templateUsed: tplCode,
-          failureReason
-        });
-
-      } catch (err: any) {
-        console.error(`❌ Dispatch Exception for ${recipient.role}:`, err.message);
-        
-        const emergencySms = await sendAligoSmsDirect(formattedReceiver, "[가족간병 등록 접수 완료]", msg);
-        
-        results.push({
-          phone: recipient.phone,
-          role: recipient.role,
-          deliveryStatus: emergencySms.isSuccess ? "sms_fallback_success" : "all_failed",
-          alimtalkSuccess: false,
-          alimtalkData: { error: err.message },
-          smsFallbackSuccess: emergencySms.isSuccess,
-          smsData: emergencySms.data,
-          error: err.message,
-          failureReason: emergencySms.isSuccess ? "" : `[네트워크 오류] ${err.message}`
-        });
-      }
+    let mainMessage = "가족간병 등록 접수가 완료되었습니다.\n안내 문자가 정상 발송되었습니다.";
+    if (!result.success) {
+      mainMessage = `문자 발송 실패:\n${result.message}`;
     }
 
-    const allAlimtalkSuccess = results.every(r => r.deliveryStatus === "alimtalk_success");
-    const anySuccess = results.some(r => r.deliveryStatus === "alimtalk_success" || r.deliveryStatus === "sms_fallback_success");
-
-    let overallSummary: "alimtalk_success" | "sms_fallback_success" | "all_failed" = "all_failed";
-    let displayMessage = "";
-
-    if (allAlimtalkSuccess) {
-      overallSummary = "alimtalk_success";
-      displayMessage = "가족간병 등록 접수가 완료되었습니다.\n알림톡이 정상 발송되었습니다.";
-    } else if (anySuccess) {
-      overallSummary = "sms_fallback_success";
-      displayMessage = "가족간병 등록 접수가 완료되었습니다.\n대체 문자(LMS)가 정상 발송되었습니다.";
-    } else {
-      overallSummary = "all_failed";
-      const firstFailure = results.find(r => r.failureReason)?.failureReason || "[오류코드: -101] 인증오류입니다.-IP";
-      displayMessage = `알림톡 발송 실패:\n${firstFailure}`;
-    }
-
-    return res.json({
-      success: anySuccess,
+    return res.status(200).json({
+      success: result.success,
       mode: "live",
-      deliverySummary: overallSummary,
-      message: displayMessage,
-      templateUsed: tplCode,
-      recipients: results,
-      msg
+      deliverySummary: result.success ? "sms_success" : "all_failed",
+      message: mainMessage,
+      solapiData: result.data,
+      msg: detailedLmsMsg
     });
 
   } catch (error: any) {
-    console.error("❌ Error in send-alimtalk route:", error);
+    console.error("❌ Exception in /api/send-alimtalk (Solapi):", error);
     return res.status(500).json({
       success: false,
-      message: "서버 내부 오류로 인해 발송 요청 처리에 실패했습니다.",
-      error: error.message
+      message: `서버 내부 오류가 발생했습니다: ${error.message}`
     });
   }
 });
 
-// Real-time Aligo SMS API proxy endpoint for Caregiver Contract
+// Real-time Solapi SMS/LMS API proxy endpoint for Caregiver Contract
 app.post(["/api/send-contract", "/send-contract"], async (req, res) => {
   try {
     const {
@@ -352,91 +269,34 @@ app.post(["/api/send-contract", "/send-contract"], async (req, res) => {
 
 온가족간병협회 고객센터: 010-9520-7839`;
 
-    let apiKey = getEnvVal("ALIGO_API_KEY", "a84t4xtpv4pu9k107tlook6lj8mpt3dh");
-    let userId = getEnvVal("ALIGO_USER_ID", "ongajok1090");
-    let senderPhone = getEnvVal("ALIGO_SENDER_PHONE", "01095207839");
+    const senderPhone = getEnvVal("SOLAPI_SENDER_PHONE", "01095207839").replace(/[^0-9]/g, "");
 
-    // Recipients: client, caregiver, and Association Customer Center "010-9520-7839"
     const recipients = [
       { phone: clientPhone, role: "구인자(보호자)" },
       { phone: caregiverPhone, role: "구직자(간병인)" },
       { phone: "010-9520-7839", role: "협회 고객센터" }
     ];
 
-    const results = [];
-    for (const recipient of recipients) {
-      const formattedReceiver = recipient.phone.replace(/[^0-9]/g, "");
-      const formattedSender = senderPhone.replace(/[^0-9]/g, "");
+    const solapiMessages = recipients.map(r => ({
+      to: r.phone.replace(/[^0-9]/g, ""),
+      from: senderPhone,
+      subject: "[온가족간병 중개계약]",
+      text: msg,
+      type: "LMS"
+    }));
 
-      const params = new URLSearchParams();
-      params.append("key", apiKey);
-      params.append("user_id", userId);
-      params.append("sender", formattedSender);
-      params.append("receiver", formattedReceiver);
-      params.append("msg", msg);
-      params.append("msg_type", "LMS");
-      params.append("title", "[온가족간병 중개계약]");
-
-      try {
-        const response = await fetch("https://apis.aligo.in/send/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: params.toString()
-        });
-
-        const status = response.status;
-        const resultJson: any = await response.json();
-        console.log(`📡 [Aligo SMS API Response status: ${status} for ${recipient.role}]:`, JSON.stringify(resultJson));
-
-        const isSuccess = 
-          resultJson.result_code === "1" || 
-          resultJson.result_code === 1 ||
-          resultJson.success === true;
-
-        results.push({
-          phone: recipient.phone,
-          role: recipient.role,
-          success: isSuccess,
-          data: resultJson
-        });
-      } catch (err: any) {
-        console.error(`❌ SMS Fetch Error for ${recipient.role}:`, err.message);
-        results.push({
-          phone: recipient.phone,
-          role: recipient.role,
-          success: false,
-          error: err.message
-        });
-      }
-    }
-
-    const anySuccess = results.some(r => r.success);
-
-    // Retrieve dynamic outbound IP
-    let outboundIp = "34.34.244.39";
-    try {
-      const ipRes = await fetch("https://api.ipify.org?format=json");
-      const ipData: any = await ipRes.json();
-      if (ipData && ipData.ip) {
-        outboundIp = ipData.ip;
-      }
-    } catch (e) {
-      // ignore
-    }
+    const result = await sendSolapiMessages(solapiMessages);
 
     let displayMessage = "중개 계약서 작성 알림 문자가 정상 전송되었습니다.";
-    if (!anySuccess) {
-      const errorDetails = results.map(r => `[${r.role}] ${r.data ? (r.data.message || JSON.stringify(r.data)) : r.error}`).join(', ');
-      displayMessage = `문자 실제 전송 실패 사유: ${errorDetails} (현재 서버 Outbound IP: ${outboundIp})`;
+    if (!result.success) {
+      displayMessage = `문자 발송 실패 사유: ${result.message}`;
     }
 
     return res.json({
-      success: anySuccess,
+      success: result.success,
       mode: "live",
       message: displayMessage,
-      recipients: results,
+      solapiData: result.data,
       msg
     });
 
