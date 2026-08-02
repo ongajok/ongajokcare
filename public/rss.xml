@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+  <title>온가족간병협회 - 공식 소식 및 상담 안내</title>
+  <link>https://ongajok.org/</link>
+  <description>사단법인 전국고용서비스협회 공식 회원사 온가족간병협회 서브링크 및 대표 서비스 안내</description>
+  <language>ko-KR</language>
+  <item>
+    <title>협회소개 - 온가족간병협회</title>
+    <link>https://ongajok.org/#accordion-introduction</link>
+    <description>사단법인 전국고용서비스협회 회원사 온가족간병협회 소개 및 이용 가이드</description>
+    <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>전화상담 (010-9520-7839)</title>
+    <link>tel:010-9520-7839</link>
+    <description>온가족간병협회 대표 전화상담 직통 연결</description>
+    <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>간병인신청 - 카카오톡 1:1 실시간 상담</title>
+    <link>http://pf.kakao.com/_YxhcwX/chat</link>
+    <description>실시간 카카오톡 1:1 상담 및 정식 가족간병 신청</description>
+    <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+</channel>
+</rss>

@@ -22,8 +22,8 @@ import CaregivingLog from "./components/CaregivingLog";
 const HERO_FAMILY_IMAGE = "https://i.postimg.cc/4x6hRz3m/gajogsajin.png";
 
 export default function App() {
-  // View state: 'home' | 'contract' | 'log' | 'registration'
-  const [currentView, setCurrentView] = useState<"home" | "contract" | "log" | "registration">("home");
+  // View state: 'home' | 'contract' | 'log'
+  const [currentView, setCurrentView] = useState<"home" | "contract" | "log">("home");
 
   // Website states with LocalStorage persistence
   const [config, setConfig] = useState<WebsiteConfig>(() => {
@@ -54,9 +54,6 @@ export default function App() {
           if (updatedNotice.date === "2026-07-16") {
             updatedNotice.date = "2026-07-20";
           }
-          if (updatedNotice.id === "notice-5" || updatedNotice.title.includes("등록은 언제")) {
-            updatedNotice.content = "대부분의 보험 📋 약관상 실제 간병이 시작되기 전에 협회에 등록이 완료되어야 정상적인 청구 및 심사가 가능합니다. 퇴원 후에 소급하여 등록하는 것은 심사상 불인정되거나 매우 어려울 수 있으니, 입원 즉시 등록해 주세요!\n\n궁금하신 부분은 언제든 협회 고객센터(010-9520-7839)로 문의해 주시기 바랍니다.\n\n지금 바로 간병인을 등록하시려면 하단의 👉 [가족간병 즉시신청] 버튼을 누르시거나 카카오톡 상담을 이용해 주세요.";
-          }
           if (
             updatedNotice.id === "notice-3" || 
             updatedNotice.title.includes("간병과 비용") || 
@@ -81,7 +78,6 @@ export default function App() {
     if (saved) {
       try {
         parsed = JSON.parse(saved);
-        // Filter out dummy mock data
         if (Array.isArray(parsed)) {
           parsed = parsed.filter(reg => reg.id !== "reg-mock-1" && reg.caregiverName !== "홍길동" && reg.caregiverPhone !== "010-1234-5678");
         }
@@ -98,7 +94,7 @@ export default function App() {
   const [adminPinInput, setAdminPinInput] = useState("");
   const [legalModalType, setLegalModalType] = useState<LegalModalType>(null);
 
-  // Accordion Expand/Collapse State (Initially collapsed per user request)
+  // Accordion Expand/Collapse State
   const [isIntroExpanded, setIsIntroExpanded] = useState(false);
   const [isProcessExpanded, setIsProcessExpanded] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -120,16 +116,13 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === "#registration") {
-        setCurrentView("registration");
-        window.scrollTo(0, 0);
-      } else if (hash === "#contract") {
+      if (hash === "#contract") {
         setCurrentView("contract");
         window.scrollTo(0, 0);
       } else if (hash === "#log") {
         setCurrentView("log");
         window.scrollTo(0, 0);
-      } else if (hash === "#home" || hash === "") {
+      } else if (hash === "#home" || hash === "" || hash === "#registration") {
         setCurrentView("home");
       }
     };
@@ -144,7 +137,7 @@ export default function App() {
   // Sync hash state with currentView
   useEffect(() => {
     if (currentView === "home") {
-      if (["#registration", "#contract", "#log"].includes(window.location.hash.toLowerCase())) {
+      if (["#contract", "#log", "#registration"].includes(window.location.hash.toLowerCase())) {
         window.history.pushState(null, "", window.location.pathname + window.location.search);
       }
     } else {
@@ -156,11 +149,6 @@ export default function App() {
 
   // Section smooth scrolling helper
   const handleScrollToSection = (id: string) => {
-    if (id === "registration") {
-      setCurrentView("registration");
-      window.scrollTo(0, 0);
-      return;
-    }
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -189,32 +177,16 @@ export default function App() {
     setRegistrations([]);
   };
 
-  // Registration submit callback
-  const handleRegisterSubmit = (formData: Omit<CaregiverRegistration, "id" | "createdAt">) => {
-    const newReg: CaregiverRegistration = {
-      ...formData,
-      id: `reg-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setRegistrations((prev) => [newReg, ...prev]);
-  };
-
   // Phone Call Action
   const handlePhoneCall = () => {
-    if (config.phone) {
-      window.location.href = `tel:${config.phone}`;
-    } else {
-      alert("고객센터 전화번호가 등록되지 않았습니다. 대표 관리자 설정에서 번호를 등록해 주세요!");
-    }
+    const phoneNum = config.phone || "010-9520-7839";
+    window.location.href = `tel:${phoneNum}`;
   };
 
   // Kakao Consultation Action
   const handleKakaoConsultation = () => {
-    if (config.kakaoLink) {
-      window.open(config.kakaoLink, "_blank");
-    } else {
-      alert("실시간 카카오톡 연결 링크가 등록되지 않았습니다. 대표 관리자 설정에서 링크를 등록해 주세요!");
-    }
+    const kakaoUrl = config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat";
+    window.open(kakaoUrl, "_blank");
   };
 
   // Login handler
@@ -231,257 +203,223 @@ export default function App() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f5f2ed] via-[#d1dace] to-[#e8dcc4] text-[#1a1a1a] min-h-screen relative overflow-x-hidden font-sans pb-12 selection:bg-rose-100">
+    <div className="bg-gradient-to-br from-[#faf8f5] via-[#f0f4f8] to-[#e8f0fe] text-[#1e293b] min-h-screen relative overflow-x-hidden font-sans pb-12 selection:bg-sky-100">
       
       {/* ========================================================= */}
-      {/* 3D SLEEK AMBIENT GLOW SYSTEM */}
+      {/* BRIGHT SLEEK AMBIENT GLOW SYSTEM */}
       {/* ========================================================= */}
-      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-[#84cc16] rounded-full mix-blend-multiply filter blur-[120px] opacity-20 pointer-events-none" />
-      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-[#f43f5e] rounded-full mix-blend-multiply filter blur-[120px] opacity-20 pointer-events-none" />
-      <div className="absolute top-[40%] right-[-100px] w-[500px] h-[500px] bg-[#84cc16] rounded-full mix-blend-multiply filter blur-[120px] opacity-15 pointer-events-none" />
-      <div className="absolute bottom-[35%] left-[-150px] w-[600px] h-[600px] bg-[#f43f5e] rounded-full mix-blend-multiply filter blur-[130px] opacity-15 pointer-events-none" />
+      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-sky-300 rounded-full mix-blend-multiply filter blur-[120px] opacity-25 pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-blue-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-25 pointer-events-none" />
+      <div className="absolute top-[40%] right-[-100px] w-[500px] h-[500px] bg-[#fcd34d] rounded-full mix-blend-multiply filter blur-[130px] opacity-20 pointer-events-none" />
 
       {/* ========================================================= */}
       {/* HEADER / NAVIGATION BAR */}
       {/* ========================================================= */}
-      <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-md border-b border-white/30 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           
-          {/* Logo Brand with elegant uniform text */}
-          <div className="flex items-center gap-2 cursor-pointer group select-none" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <CompanyLogo size={40} />
-            <span className="text-sm md:text-base font-black tracking-tight text-[#1e3a8a] whitespace-nowrap">
+          {/* Logo Brand */}
+          <div className="flex items-center gap-2 cursor-pointer group select-none shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <CompanyLogo size={36} />
+            <span className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#1e3a8a] whitespace-nowrap">
               온가족 간병협회
             </span>
           </div>
 
-          {/* Desktop Navigation links - uniform font size and layout */}
-          <nav className="hidden md:flex items-center gap-5 lg:gap-6">
-            <button
-              onClick={() => {
+          {/* Desktop Navigation links */}
+          <nav className="hidden md:flex items-center gap-5 lg:gap-7">
+            <a
+              href="#accordion-introduction"
+              onClick={(e) => {
+                e.preventDefault();
                 setCurrentView("home");
                 setIsIntroExpanded(true);
                 setTimeout(() => handleScrollToSection("accordion-introduction"), 100);
               }}
-              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
+              title="협회소개 페이지"
+              className="text-xs md:text-sm font-extrabold text-slate-700 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
               협회소개
-            </button>
-            <button
-              onClick={() => {
+            </a>
+            <a
+              href="tel:010-9520-7839"
+              title="전화상담 연결 (010-9520-7839)"
+              className="text-xs md:text-sm font-extrabold text-slate-700 hover:text-[#1e3a8a] transition-colors cursor-pointer"
+            >
+              전화상담
+            </a>
+            <a
+              href={config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat"}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="간병인신청 카카오톡 1:1 상담"
+              className="text-xs md:text-sm font-extrabold text-slate-700 hover:text-[#1e3a8a] transition-colors cursor-pointer"
+            >
+              간병인신청
+            </a>
+            <a
+              href="#accordion-map"
+              onClick={(e) => {
+                e.preventDefault();
                 setCurrentView("home");
                 setIsMapExpanded(true);
                 setTimeout(() => handleScrollToSection("accordion-map"), 100);
               }}
-              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
+              title="오시는길"
+              className="text-xs md:text-sm font-extrabold text-slate-700 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
               오시는길
-            </button>
-            <button
-              onClick={() => {
-                setCurrentView("registration");
-                window.scrollTo(0, 0);
-              }}
-              className="text-xs md:text-sm font-extrabold text-[#e11d48] hover:text-[#be123c] transition-colors cursor-pointer"
-              style={{ color: '#e11d48' }}
-            >
-              가족간병 즉시신청
-            </button>
-            <button
-              onClick={() => {
+            </a>
+            <a
+              href="#accordion-notices"
+              onClick={(e) => {
+                e.preventDefault();
                 setCurrentView("home");
                 setIsNoticeExpanded(true);
                 setTimeout(() => handleScrollToSection("accordion-notices"), 100);
               }}
-              className="text-xs md:text-sm font-extrabold text-slate-900 hover:text-[#1e3a8a] transition-colors cursor-pointer"
+              title="게시판"
+              className="text-xs md:text-sm font-extrabold text-slate-700 hover:text-[#1e3a8a] transition-colors cursor-pointer"
             >
               게시판
-            </button>
+            </a>
           </nav>
 
-          {/* Header Action Buttons & Security Toggle */}
-          <div className="flex items-center gap-2">
-            {/* Header Direct Phone Call Icon */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handlePhoneCall}
-              className="p-2.5 bg-white text-[#1e3a8a] hover:bg-slate-50 rounded-xl border border-blue-100 shadow-md cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center"
-              title="전화상담 연결"
+          {/* Header Direct Phone Call & Kakao Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Phone Call Button */}
+            <a
+              href="tel:010-9520-7839"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-sm cursor-pointer transition-all duration-200 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold whitespace-nowrap"
+              title="전화상담 연결 (010-9520-7839)"
             >
-              <Phone className="w-4 h-4 fill-[#1e3a8a]" />
-            </motion.button>
+              <Phone className="w-3.5 h-3.5 fill-white shrink-0" />
+              <span className="hidden sm:inline">010-9520-7839</span>
+              <span className="inline sm:hidden">전화</span>
+            </a>
 
-            {/* Header Direct KakaoTalk Consultation Icon */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleKakaoConsultation}
-              className="p-2.5 bg-[#fee500] text-[#3c1e1e] hover:bg-[#edd300] rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center"
-              title="카톡 실시간상담"
+            {/* KakaoTalk Consultation Button */}
+            <a
+              href={config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#fee500] hover:bg-[#edd300] text-[#191919] rounded-xl shadow-sm cursor-pointer transition-all duration-200 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-black whitespace-nowrap"
+              title="카카오톡 1:1 상담"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current text-[#3c1e1e]">
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current text-[#191919] shrink-0">
                 <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
               </svg>
-            </motion.button>
-
-            {/* Header Direct Caregiver Registration Form Nav Icon */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                setCurrentView("registration");
-                window.scrollTo(0, 0);
-              }}
-              className="p-2.5 bg-[#f43f5e] text-white hover:bg-[#e11d48] rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center"
-              title="가족간병 등록신청"
-            >
-              <Edit3 className="w-4 h-4" />
-            </motion.button>
-
-            {/* Administrative Panel Security Switch */}
-            <div className="h-5 w-[1px] bg-slate-300 mx-1" />
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (isAdminMode) {
-                  setIsAdminMode(false);
-                  alert("안전하게 로그아웃되어 일반 유저 화면으로 복귀했습니다. 🔒");
-                } else {
-                  setShowAdminLogin(true);
-                }
-              }}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md transition-all ${
-                isAdminMode
-                  ? "bg-[#84cc16] text-white shadow-[#84cc16]/20"
-                  : "bg-slate-900 text-slate-100 hover:bg-slate-800"
-              }`}
-            >
-              {isAdminMode ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-              <span>{isAdminMode ? "관리자 켜짐" : "관리자 설정"}</span>
-            </motion.button>
+              <span>카톡 1:1 상담</span>
+            </a>
           </div>
 
         </div>
       </header>
 
       {/* ========================================================= */}
-      {/* MOVIE-POSTER STYLE CINEMATIC HERO BANNER */}
+      {/* HIGH-CONTRAST HERO BANNER WITH DIRECT CONSULTATION BUTTONS */}
       {/* ========================================================= */}
       {currentView === "home" && (
-        <section className="relative w-full max-w-6xl mx-auto px-4 pt-6 pb-12">
+        <section className="relative w-full max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8">
         <div 
-          className="relative rounded-3xl overflow-hidden shadow-[0_25px_50px_rgba(0,0,0,0.25)] min-h-[500px] md:min-h-[550px] flex items-center justify-center border border-white/10 py-10 md:py-12 bg-slate-950"
+          className="relative rounded-3xl sm:rounded-[32px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.25)] min-h-[460px] md:min-h-[500px] flex items-center justify-center border border-white/20 py-10 md:py-14 bg-slate-950"
         >
           
-          {/* Elegant Static Background Image */}
+          {/* Static Clear Background Image - No Blend Modes or Blur */}
           <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
             <img
               src={HERO_FAMILY_IMAGE}
-              alt="Cinematic Background Layer"
+              alt="온가족간병협회 대표 이미지"
               referrerPolicy="no-referrer"
-              className="absolute inset-0 w-full h-full object-cover filter brightness-[0.45] contrast-[1.05]"
+              className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.85] contrast-[1.05]"
             />
           </div>
 
-          {/* Premium dark & warm transparent gradients for maximum text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent z-[2]" />
-          <div className="absolute inset-0 bg-amber-950/5 pointer-events-none z-[2]" />
+          {/* High-Contrast Dark Gradient Overlay for Maximum Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-slate-900/40 z-[2]" />
 
-          {/* Slogan and details centered/bottomed on banner */}
-          <div className="absolute bottom-6 left-6 right-6 md:left-12 md:right-12 text-center md:text-left z-10 space-y-3">
+          {/* Hero Content */}
+          <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-4">
+            
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="inline-block"
             >
-              <span className="text-[10px] font-black tracking-widest text-amber-300 bg-amber-950/60 backdrop-blur-md px-3 py-1 rounded-full border border-amber-500/20 uppercase shadow-sm">
-                Nationwide Caregiving Association
+              <span className="text-xs font-black tracking-wider text-amber-300 bg-slate-900/80 border border-amber-400/50 backdrop-blur-md px-4 py-1.5 rounded-full shadow-md">
+                🏢 전국공식허가 온가족간병협회
               </span>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 25 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
+              transition={{ delay: 0.2 }}
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]"
             >
-              아픈 가족의 곁, 가장 가까운 곳에서 <br className="hidden md:inline" /> 따뜻한 동행이 시작됩니다
+              아픈 가족의 곁, 가장 가까운 곳에서 <br className="hidden sm:inline" /> 
+              <span className="text-[#fde047] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">따뜻한 동행</span>이 시작됩니다
             </motion.h1>
 
             <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-xs sm:text-sm md:text-base text-slate-100 font-extrabold max-w-xl mx-auto leading-relaxed drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"
+            >
+              가족간병인의 공식 등록부터 행정 서류 준비 대행까지 <br className="hidden md:inline" />
+              <span className="text-sky-300">온가족간병협회</span>가 친절하고 정성껏 상담해 드립니다.
+            </motion.p>
+
+            {/* Direct Consultation Buttons Grid (Phone Consultation & KakaoTalk Consultation) */}
+            <motion.div
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-xs text-slate-100 font-semibold leading-relaxed max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] hidden sm:block"
+              className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto"
             >
-              가족간병 등록부터 행정 서류 구비까지 온가족간병협회가 보호자님과 늘 함께하겠습니다.
-            </motion.p>
-
-            {/* 3 Premium Card Buttons in Grid (Navy, Gold, Ivory 3D Themes) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="pt-2.5 space-y-3 w-full max-w-xl mx-auto md:mx-0"
-            >
-              {/* Row 1: Full-width Button Card - Glowing Premium Navy */}
-              <button
-                onClick={() => {
-                  setCurrentView("registration");
-                  window.scrollTo(0, 0);
-                }}
-                className="w-full text-left p-4 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white rounded-2xl shadow-[0_12px_28px_rgba(30,58,138,0.4),0_0_15px_rgba(59,130,246,0.25)] border-b-4 border-[#0f172a] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/20 flex items-center justify-between"
+              {/* Phone Consultation Button */}
+              <a
+                href="tel:010-9520-7839"
+                className="group relative flex items-center justify-center gap-3 p-3.5 sm:p-4 bg-gradient-to-r from-sky-500 via-sky-600 to-blue-700 hover:from-sky-600 hover:to-blue-800 text-white rounded-2xl shadow-[0_10px_25px_rgba(2,132,199,0.4)] border border-sky-300/50 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-center"
               >
-                {/* Shimmer overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                
-                <div className="flex items-center gap-3 z-10">
-                  <div className="p-2 bg-white/15 text-white rounded-xl">
-                    <Edit3 className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 fill-white text-white" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-black tracking-tight text-white flex items-center gap-1">
+                    <span>📞 전화상담</span>
                   </div>
-                  <div>
-                    <h3 className="text-xs md:text-sm font-black tracking-tight text-white">가족간병 즉시신청</h3>
-                    <p className="text-[10px] text-blue-100 font-bold">협회 표준 시스템에 가족간병 등록 신청서를 제출합니다.</p>
+                  <div className="text-[11px] font-extrabold text-sky-100">
+                    010-9520-7839
                   </div>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-x-1 transition-transform z-10">
-                  <span className="text-xs font-black text-white">→</span>
-                </div>
-              </button>
+              </a>
 
-              {/* Row 2: KakaoTalk 1:1 Consultation Button - Darker Soft Light Yellow */}
-              <button
-                onClick={handleKakaoConsultation}
-                className="w-full text-left p-4 bg-gradient-to-r from-[#b5942b] via-[#d4b24c] to-[#ebd27c] text-amber-950 rounded-2xl shadow-[0_12px_24px_rgba(181,148,43,0.3),0_0_15px_rgba(235,210,124,0.15)] border-b-4 border-[#7a5a04] hover:border-b-2 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer relative overflow-hidden group border-t border-white/20 flex items-center justify-between"
+              {/* KakaoTalk 1:1 Consultation Button */}
+              <a
+                href={config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center justify-center gap-3 p-3.5 sm:p-4 bg-gradient-to-r from-[#ffe812] via-[#fde047] to-[#eab308] hover:from-[#fde047] hover:to-[#ca8a04] text-[#191919] rounded-2xl shadow-[0_10px_25px_rgba(234,179,8,0.4)] border border-yellow-200/70 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-center"
               >
-                {/* Shimmer overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                
-                <div className="flex items-center gap-3 z-10">
-                  <div className="p-2 bg-amber-950/10 rounded-xl">
-                    <MessageSquare className="w-5 h-5 text-amber-950" />
+                <div className="w-9 h-9 rounded-xl bg-black/10 flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current text-[#191919]">
+                    <path d="M12 3c-5.523 0-10 3.582-10 8c0 2.91 1.848 5.485 4.636 6.883l-1.18 4.316c-.1.365.311.666.623.46l5.067-3.342c.28.024.564.043.854.043 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-black tracking-tight text-[#191919]">
+                    💬 카카오톡 1:1 상담
                   </div>
-                  <div>
-                    <h3 className="text-xs md:text-sm font-black tracking-tight text-amber-950">카카오톡 1:1 상담</h3>
-                    <p className="text-[10px] text-amber-900 font-bold">실시간 간병 관련 고민 상담 및 정식 등록을 도와드립니다.</p>
+                  <div className="text-[11px] font-extrabold text-[#422006]">
+                    실시간 1:1 채팅 문의
                   </div>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-amber-950/10 flex items-center justify-center group-hover:translate-x-1 transition-transform z-10">
-                  <span className="text-xs font-black text-amber-950">→</span>
-                </div>
-              </button>
+              </a>
             </motion.div>
-          </div>
 
-          {/* Floated Mini Welcoming Mascot '온이' Bubble inside Hero Banner */}
-          <div className="absolute top-6 right-6 z-20 max-w-xs hidden md:block">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.6 }}
-            >
-              <MascotOni text={config.oniIntroText} pose="wave" className="!bg-slate-950/70 !border-slate-800/40 !backdrop-blur-lg" />
-            </motion.div>
           </div>
         </div>
       </section>
@@ -518,15 +456,15 @@ export default function App() {
             transition={{ duration: 0.3 }}
           >
             {/* ========================================================= */}
-            {/* INTERACTIVE ACCORDIONS SECTION (협회소개 / 신청절차 / 오시는 길) */}
+            {/* INTERACTIVE ACCORDIONS SECTION */}
             {/* ========================================================= */}
             <div className="max-w-5xl mx-auto px-4 py-8 space-y-4">
               
               {/* Accordion 1: 협회소개 */}
-              <div id="accordion-introduction" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+              <div id="accordion-introduction" className="bg-white/70 backdrop-blur-md rounded-3xl border border-white/80 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] transition-all scroll-mt-24">
                 <button
                   onClick={() => setIsIntroExpanded(!isIntroExpanded)}
-                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/50 transition-colors focus:outline-none cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-2xl border border-blue-100 shadow-inner flex-shrink-0">
@@ -555,7 +493,7 @@ export default function App() {
                       transition={{ duration: 0.35, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                      <div className="border-t border-slate-200/50 bg-white/40 pb-6 md:pb-8">
                         <Introduction config={config} showOnly="greeting" />
                       </div>
                     </motion.div>
@@ -564,10 +502,10 @@ export default function App() {
               </div>
 
               {/* Accordion 2: 간병 신청 절차 */}
-              <div id="accordion-process" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+              <div id="accordion-process" className="bg-white/70 backdrop-blur-md rounded-3xl border border-white/80 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] transition-all scroll-mt-24">
                 <button
                   onClick={() => setIsProcessExpanded(!isProcessExpanded)}
-                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/50 transition-colors focus:outline-none cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-100 shadow-inner flex-shrink-0">
@@ -575,7 +513,7 @@ export default function App() {
                     </div>
                     <div>
                       <h3 className="text-base md:text-lg font-black text-[#1e3a8a]">간병 신청 절차</h3>
-                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">원클릭 간편등록 및 보험청구를 위한 가이드 라인</p>
+                      <p className="text-[11px] md:text-xs text-slate-500 font-semibold mt-0.5">간편 상담 등록 및 공식 서류 발급 절차 가이드</p>
                     </div>
                   </div>
                   <motion.div
@@ -596,7 +534,7 @@ export default function App() {
                       transition={{ duration: 0.35, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                      <div className="border-t border-slate-200/50 bg-white/40 pb-6 md:pb-8">
                         <Process config={config} />
                       </div>
                     </motion.div>
@@ -605,10 +543,10 @@ export default function App() {
               </div>
 
               {/* Accordion 3: 오시는 길 */}
-              <div id="accordion-map" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+              <div id="accordion-map" className="bg-white/70 backdrop-blur-md rounded-3xl border border-white/80 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] transition-all scroll-mt-24">
                 <button
                   onClick={() => setIsMapExpanded(!isMapExpanded)}
-                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/50 transition-colors focus:outline-none cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-rose-50 text-rose-800 rounded-2xl border border-rose-100 shadow-inner flex-shrink-0">
@@ -637,7 +575,7 @@ export default function App() {
                       transition={{ duration: 0.35, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-slate-200/50 bg-white/10 pb-6 md:pb-8">
+                      <div className="border-t border-slate-200/50 bg-white/40 pb-6 md:pb-8">
                         <Introduction config={config} showOnly="directions" />
                       </div>
                     </motion.div>
@@ -646,10 +584,10 @@ export default function App() {
               </div>
 
               {/* Accordion 4: 알림 및 소식 게시판 */}
-              <div id="accordion-notices" className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/40 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all scroll-mt-24">
+              <div id="accordion-notices" className="bg-white/70 backdrop-blur-md rounded-3xl border border-white/80 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] transition-all scroll-mt-24">
                 <button
                   onClick={() => setIsNoticeExpanded(!isNoticeExpanded)}
-                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/30 transition-colors focus:outline-none cursor-pointer"
+                  className="w-full text-left p-5 md:p-6 flex items-center justify-between gap-4 hover:bg-white/50 transition-colors focus:outline-none cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-50 text-[#1e3a8a] rounded-2xl border border-blue-100 shadow-inner flex-shrink-0">
@@ -678,7 +616,7 @@ export default function App() {
                       transition={{ duration: 0.35, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-slate-200/50 bg-white/10 p-4 md:p-6">
+                      <div className="border-t border-slate-200/50 bg-white/40 p-4 md:p-6">
                         <NoticeBoard
                           config={config}
                           notices={notices}
@@ -692,10 +630,6 @@ export default function App() {
                               const el = document.getElementById("accordion-introduction");
                               if (el) el.scrollIntoView({ behavior: "smooth" });
                             }, 100);
-                          }}
-                          onGoToRegistration={() => {
-                            setCurrentView("registration");
-                            window.scrollTo(0, 0);
                           }}
                           onGoToCaregivingLog={() => {
                             setCurrentView("log");
@@ -719,24 +653,6 @@ export default function App() {
             transition={{ duration: 0.3 }}
           >
             <CaregiverContract onBack={() => setCurrentView("home")} phone={config.phone} />
-          </motion.div>
-        ) : currentView === "registration" ? (
-          <motion.div
-            key="registration-view"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RegistrationForm
-              config={config}
-              onRegisterSubmit={handleRegisterSubmit}
-              onOpenLegalModal={setLegalModalType}
-              onBack={() => {
-                setCurrentView("home");
-                window.scrollTo(0, 0);
-              }}
-            />
           </motion.div>
         ) : (
           <motion.div

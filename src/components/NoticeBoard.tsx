@@ -293,15 +293,23 @@ export default function NoticeBoard({
 
                         {(notice.title.includes("등록은 언제") || 
                           notice.title.includes("등록 절차는")) && (
-                          <div className="mt-4 flex">
-                            <button
-                              type="button"
-                              onClick={onGoToRegistration}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-emerald-700 animate-pulse"
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <a
+                              href="tel:010-9520-7839"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-sky-700"
                             >
-                              <span>✍️</span>
-                              <span>가족간병 즉시신청</span>
-                            </button>
+                              <span>📞</span>
+                              <span>전화상담 (010-9520-7839)</span>
+                            </a>
+                            <a
+                              href={config.kakaoLink || "http://pf.kakao.com/_YxhcwX/chat"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#fee500] hover:bg-[#e6cf00] text-[#191919] font-black text-xs rounded-xl shadow-md transition-all cursor-pointer border border-[#f5dd00]"
+                            >
+                              <span>💬</span>
+                              <span>카카오톡 1:1 상담</span>
+                            </a>
                           </div>
                         )}
 
